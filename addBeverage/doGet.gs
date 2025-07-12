@@ -4,7 +4,7 @@
  */
 function doGet(e) {
   try {
-    const template = HtmlService.createTemplateFromFile('beverageForm');
+    const template = HtmlService.createTemplateFromFile('addBeverage/beverageForm');
     const formData = getDataForBeverageForm(); // Fetch both ingredient names and spirits
     
     // Add detailed debugging
