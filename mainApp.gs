@@ -1,10 +1,17 @@
 /**
  * Unified Beverage Management Interface
  * Defaults to beverage creation with integrated ingredient addition
+ * Version: 3.0.0 - Unified Interface
  */
+
+// System Version Configuration
+const SYSTEM_VERSION = '3.0.0';
+const VERSION_DATE = '2024-07-12';
+const VERSION_NAME = 'Unified Beverage Interface';
+
 function doGet(e) {
   try {
-    Logger.log('Unified Beverage Management Interface starting');
+    Logger.log(`Unified Beverage Management Interface starting - Version ${SYSTEM_VERSION}`);
     
     // Default directly to integrated beverage form
     return getUnifiedBeverageApp();
@@ -13,6 +20,18 @@ function doGet(e) {
     Logger.log('Error in doGet: ' + error.toString());
     return HtmlService.createHtmlOutput('<h2>Error loading Beverage Management System: ' + error.toString() + '</h2>');
   }
+}
+
+/**
+ * Get system version information
+ */
+function getSystemVersion() {
+  return {
+    version: SYSTEM_VERSION,
+    date: VERSION_DATE,
+    name: VERSION_NAME,
+    timestamp: new Date()
+  };
 }
 
 /**
@@ -208,18 +227,149 @@ function saveBeverageData(beverageData) {
   try {
     Logger.log('Saving beverage data: ' + JSON.stringify(beverageData));
     
-    // Use the existing beverage saving logic from addBeverage
-    // You would implement the beverage saving logic here
-    // For now, we'll return a success message
+    // Validate required fields
+    if (!beverageData.beverageName) {
+      throw new Error('Beverage name is required');
+    }
+    
+    if (!beverageData.ingredients || beverageData.ingredients.length === 0) {
+      throw new Error('At least one ingredient is required');
+    }
+    
+    // Get spreadsheets
+    const spreadsheetId = "1-M1E2PVtAmGYj4SviOqo97RXxfhVEEtnxWROa3lHU3c";
+    const ss = SpreadsheetApp.openById(spreadsheetId);
+    
+    let recipesSheet = ss.getSheetByName('Recipes');
+    let recipeIngredientsSheet = ss.getSheetByName('Recipe_Ingredients');
+    
+    // Create sheets if they don't exist
+    if (!recipesSheet) {
+      recipesSheet = ss.insertSheet('Recipes');
+      const recipeHeaders = [
+        'Recipe_ID', 'Name', 'Description', 'Category', 'Difficulty',
+        'Serving_Size', 'Prep_Time_Minutes', 'Total_Cost', 'Alcoholic',
+        'Dietary_Tags', 'Instructions', 'Created_Date', 'Updated_Date',
+        'Version', 'Active'
+      ];
+      recipesSheet.getRange(1, 1, 1, recipeHeaders.length).setValues([recipeHeaders]);
+      recipesSheet.setFrozenRows(1);
+    }
+    
+    if (!recipeIngredientsSheet) {
+      recipeIngredientsSheet = ss.insertSheet('Recipe_Ingredients');
+      const relationshipHeaders = [
+        'Relationship_ID', 'Recipe_ID', 'Ingredient_ID', 'Quantity', 'Unit',
+        'Preparation_Method', 'Substitution_Allowed', 'Garnish_Flag',
+        'Critical_Ingredient', 'Cost_Contribution', 'Order_Sequence'
+      ];
+      recipeIngredientsSheet.getRange(1, 1, 1, relationshipHeaders.length).setValues([relationshipHeaders]);
+      recipeIngredientsSheet.setFrozenRows(1);
+    }
+    
+    // Generate recipe ID
+    const recipeId = 'RCP_' + new Date().getTime();
+    const now = new Date();
+    
+    // Calculate total cost (simplified - would need ingredient cost lookup)
+    let totalCost = 0;
+    
+    // Prepare recipe data
+    const recipeRow = [
+      recipeId,
+      beverageData.beverageName,
+      '', // description
+      beverageData.beverageType || 'Cocktail',
+      'Beginner', // difficulty
+      1, // serving size
+      5, // prep time minutes
+      totalCost,
+      true, // alcoholic (assume true for beverages)
+      '', // dietary tags
+      beverageData.instructions || '',
+      now,
+      now,
+      '1.0', // version
+      true // active
+    ];
+    
+    // Add recipe to sheet
+    recipesSheet.appendRow(recipeRow);
+    
+    // Add ingredient relationships
+    beverageData.ingredients.forEach((ingredient, index) => {
+      const relationshipId = 'REL_' + recipeId + '_' + (index + 1);
+      
+      // Try to find ingredient ID (simplified - just use name for now)
+      const ingredientId = findIngredientId(ingredient.name, ss) || ingredient.name;
+      
+      const relationshipRow = [
+        relationshipId,
+        recipeId,
+        ingredientId,
+        ingredient.amount,
+        ingredient.unit,
+        '', // preparation method
+        false, // substitution allowed
+        false, // garnish flag
+        index === 0, // first ingredient is critical
+        0, // cost contribution (would calculate from ingredient cost)
+        ingredient.order || (index + 1)
+      ];
+      
+      recipeIngredientsSheet.appendRow(relationshipRow);
+    });
+    
+    Logger.log('Beverage saved successfully with Recipe ID: ' + recipeId);
     
     return {
       success: true,
-      message: 'Beverage "' + beverageData.beverageName + '" saved successfully!'
+      message: 'Beverage "' + beverageData.beverageName + '" saved successfully!',
+      recipeId: recipeId
     };
     
   } catch (error) {
     Logger.log('Error saving beverage: ' + error.toString());
     throw new Error('Failed to save beverage: ' + error.message);
+  }
+}
+
+/**
+ * Find ingredient ID by name (simplified lookup)
+ */
+function findIngredientId(ingredientName, spreadsheet) {
+  try {
+    const ingredientsSheet = spreadsheet.getSheetByName('Enhanced_Ingredients') || 
+                           spreadsheet.getSheetByName('database');
+    
+    if (!ingredientsSheet) return null;
+    
+    const data = ingredientsSheet.getDataRange().getValues();
+    if (data.length < 2) return null;
+    
+    const headers = data[0];
+    const nameIndex = headers.findIndex(h => 
+      String(h).toLowerCase().includes('ingredientname') || 
+      String(h).toLowerCase().includes('name')
+    );
+    const idIndex = headers.findIndex(h => 
+      String(h).toLowerCase().includes('ingredient_id') || 
+      String(h).toLowerCase().includes('id')
+    );
+    
+    if (nameIndex === -1) return null;
+    
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][nameIndex]).toLowerCase().trim() === ingredientName.toLowerCase().trim()) {
+        return idIndex !== -1 ? data[i][idIndex] : null;
+      }
+    }
+    
+    return null;
+    
+  } catch (error) {
+    Logger.log('Error finding ingredient ID: ' + error.toString());
+    return null;
   }
 }
 

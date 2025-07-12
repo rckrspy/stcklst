@@ -1,6 +1,8 @@
 /**
  * Installable Beverage Management System - Complete Installation Package
  * Creates separate database spreadsheets and handles full system deployment
+ * Version: 3.0.0 - Unified Beverage Interface
+ * Date: 2024-07-12
  */
 
 /**

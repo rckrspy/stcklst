@@ -316,6 +316,148 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
+        /* === Dynamic Ingredients Styles === */
+        .ingredients-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .ingredients-header label {
+            margin-bottom: 0;
+        }
+        
+        .btn-sm {
+            padding: 5px 12px;
+            font-size: 12px;
+        }
+        
+        .ingredient-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            background: #fafafa;
+            position: relative;
+        }
+        
+        .ingredient-row.dragging {
+            opacity: 0.5;
+            transform: rotate(5deg);
+        }
+        
+        .drag-handle {
+            cursor: grab;
+            color: #6c757d;
+            font-size: 18px;
+            padding: 5px;
+            user-select: none;
+        }
+        
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+        
+        .ingredient-row-content {
+            display: flex;
+            flex: 1;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .ingredient-select {
+            flex: 2;
+            min-width: 150px;
+        }
+        
+        .ingredient-amount {
+            flex: 1;
+            min-width: 80px;
+        }
+        
+        .ingredient-unit {
+            flex: 1;
+            min-width: 80px;
+        }
+        
+        .ingredient-actions {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .btn-remove {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .btn-remove:hover {
+            background: #c82333;
+        }
+        
+        .btn-add-new {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 5px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        
+        .btn-add-new:hover {
+            background: #218838;
+        }
+        
+        .ingredients-footer {
+            margin-top: 10px;
+        }
+        
+        .text-muted {
+            color: #6c757d;
+        }
+        
+        .duplicate-ingredient {
+            background-color: #fff3cd !important;
+            border-color: #ffeaa7 !important;
+        }
+        
+        .duplicate-ingredient .ingredient-select {
+            border-color: #dc3545 !important;
+        }
+        
+        /* === Responsive Design for Ingredients === */
+        @media (max-width: 768px) {
+            .ingredient-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .ingredient-row-content {
+                flex-direction: column;
+            }
+            
+            .ingredient-select,
+            .ingredient-amount,
+            .ingredient-unit {
+                min-width: auto;
+            }
+            
+            .drag-handle {
+                align-self: center;
+                order: -1;
+            }
+        }
     </style>
 </head>
 <body>
@@ -323,7 +465,12 @@
         <!-- Beverage Creation Form -->
         <div class="beverage-section">
             <div class="page-header">
-                <h1 class="page-title">🍹 Create New Beverage</h1>
+                <div>
+                    <h1 class="page-title">🍹 Create New Beverage</h1>
+                    <div class="version-info" style="font-size: 0.8rem; color: #6c757d; margin-top: 5px;">
+                        Version 3.0.0 - Unified Beverage Interface
+                    </div>
+                </div>
                 <a href="https://script.google.com/d/1rpVR1c_8a7RbFy6dmCJa2kSCjgQ_stw-EdpIN4v4F3bRla-szSbZyzy6/edit" 
                    target="_blank" class="enterprise-link">
                     🚀 Enterprise System
@@ -356,86 +503,20 @@
                     </select>
                 </div>
                 
-                <!-- Primary Ingredient with Add Option -->
+                <!-- Dynamic Ingredients Section -->
                 <div class="form-group">
-                    <label for="primaryIngredient">Primary Ingredient *</label>
-                    <div class="ingredient-selector">
-                        <div class="ingredient-controls">
-                            <select id="primaryIngredient" name="primaryIngredient" 
-                                    class="ingredient-dropdown" required>
-                                <option value="">-- Select Primary Ingredient --</option>
-                                <? if (ingredientNames && ingredientNames.length > 0) { ?>
-                                    <? ingredientNames.forEach(function(ingredient) { ?>
-                                        <option value="<?= ingredient ?>"><?= ingredient ?></option>
-                                    <? }); ?>
-                                <? } ?>
-                            </select>
-                            <button type="button" class="add-ingredient-btn" 
-                                    onclick="openIngredientModal('primaryIngredient')">
-                                ➕ Add New
-                            </button>
-                        </div>
+                    <div class="ingredients-header">
+                        <label>Recipe Ingredients *</label>
+                        <button type="button" class="btn btn-success btn-sm" onclick="addIngredientRow()">
+                            ➕ Add Ingredient
+                        </button>
                     </div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="primaryAmount">Primary Amount</label>
-                    <input type="number" id="primaryAmount" name="primaryAmount" 
-                           step="0.25" min="0" placeholder="e.g., 2">
-                </div>
-                
-                <div class="form-group">
-                    <label for="primaryUnit">Primary Unit</label>
-                    <select id="primaryUnit" name="primaryUnit">
-                        <option value="oz">oz</option>
-                        <option value="ml">ml</option>
-                        <option value="cups">cups</option>
-                        <option value="tsp">tsp</option>
-                        <option value="tbsp">tbsp</option>
-                        <option value="dashes">dashes</option>
-                        <option value="splash">splash</option>
-                    </select>
-                </div>
-                
-                <!-- Secondary Ingredient with Add Option -->
-                <div class="form-group">
-                    <label for="secondaryIngredient">Secondary Ingredient</label>
-                    <div class="ingredient-selector">
-                        <div class="ingredient-controls">
-                            <select id="secondaryIngredient" name="secondaryIngredient" 
-                                    class="ingredient-dropdown">
-                                <option value="">-- Select Secondary Ingredient --</option>
-                                <? if (ingredientNames && ingredientNames.length > 0) { ?>
-                                    <? ingredientNames.forEach(function(ingredient) { ?>
-                                        <option value="<?= ingredient ?>"><?= ingredient ?></option>
-                                    <? }); ?>
-                                <? } ?>
-                            </select>
-                            <button type="button" class="add-ingredient-btn" 
-                                    onclick="openIngredientModal('secondaryIngredient')">
-                                ➕ Add New
-                            </button>
-                        </div>
+                    <div id="ingredients-container">
+                        <!-- Dynamic ingredient rows will be added here -->
                     </div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="secondaryAmount">Secondary Amount</label>
-                    <input type="number" id="secondaryAmount" name="secondaryAmount" 
-                           step="0.25" min="0" placeholder="e.g., 0.5">
-                </div>
-                
-                <div class="form-group">
-                    <label for="secondaryUnit">Secondary Unit</label>
-                    <select id="secondaryUnit" name="secondaryUnit">
-                        <option value="oz">oz</option>
-                        <option value="ml">ml</option>
-                        <option value="cups">cups</option>
-                        <option value="tsp">tsp</option>
-                        <option value="tbsp">tbsp</option>
-                        <option value="dashes">dashes</option>
-                        <option value="splash">splash</option>
-                    </select>
+                    <div class="ingredients-footer">
+                        <small class="text-muted">At least one ingredient is required. Drag to reorder ingredients.</small>
+                    </div>
                 </div>
                 
                 <!-- Additional Info -->
@@ -590,9 +671,12 @@
         let currentTargetDropdown = null;
         let availableIngredients = <?= JSON.stringify(ingredientNames || []) ?>;
         let baseSpirits = <?= JSON.stringify(baseSpirits || []) ?>;
+        let ingredientCounter = 0;
+        let ingredientsData = [];
         
         // Initialize the app
         document.addEventListener('DOMContentLoaded', function() {
+            initializeIngredientsSection();
             loadSavedProgress();
             updateRecipePreview();
             
@@ -606,13 +690,230 @@
             });
         });
         
+        // === Dynamic Ingredients Management === 
+        
+        /**
+         * Initialize ingredients section with one default row
+         */
+        function initializeIngredientsSection() {
+            // Add first ingredient row by default
+            addIngredientRow();
+        }
+        
+        /**
+         * Add a new ingredient row
+         */
+        function addIngredientRow(ingredient = null) {
+            const container = document.getElementById('ingredients-container');
+            const rowId = 'ingredient-row-' + (++ingredientCounter);
+            
+            const rowDiv = document.createElement('div');
+            rowDiv.className = 'ingredient-row';
+            rowDiv.setAttribute('data-row-id', rowId);
+            rowDiv.draggable = true;
+            
+            rowDiv.innerHTML = `
+                <div class="drag-handle" title="Drag to reorder">⋮⋮</div>
+                <div class="ingredient-row-content">
+                    <select class="ingredient-select" name="ingredient-${ingredientCounter}" 
+                            onchange="updateIngredientsData(); saveProgress(); updateRecipePreview();">
+                        <option value="">-- Select Ingredient --</option>
+                        ${availableIngredients.map(ing => 
+                            `<option value="${ing}" ${ingredient && ingredient.name === ing ? 'selected' : ''}>${ing}</option>`
+                        ).join('')}
+                    </select>
+                    <input type="number" class="ingredient-amount" name="amount-${ingredientCounter}" 
+                           placeholder="Amount" step="0.25" min="0" 
+                           value="${ingredient ? ingredient.amount || '' : ''}"
+                           onchange="updateIngredientsData(); saveProgress(); updateRecipePreview();">
+                    <select class="ingredient-unit" name="unit-${ingredientCounter}" 
+                            onchange="updateIngredientsData(); saveProgress(); updateRecipePreview();">
+                        <option value="oz" ${ingredient && ingredient.unit === 'oz' ? 'selected' : ''}>oz</option>
+                        <option value="ml" ${ingredient && ingredient.unit === 'ml' ? 'selected' : ''}>ml</option>
+                        <option value="cups" ${ingredient && ingredient.unit === 'cups' ? 'selected' : ''}>cups</option>
+                        <option value="tsp" ${ingredient && ingredient.unit === 'tsp' ? 'selected' : ''}>tsp</option>
+                        <option value="tbsp" ${ingredient && ingredient.unit === 'tbsp' ? 'selected' : ''}>tbsp</option>
+                        <option value="dashes" ${ingredient && ingredient.unit === 'dashes' ? 'selected' : ''}>dashes</option>
+                        <option value="splash" ${ingredient && ingredient.unit === 'splash' ? 'selected' : ''}>splash</option>
+                        <option value="each" ${ingredient && ingredient.unit === 'each' ? 'selected' : ''}>each</option>
+                    </select>
+                </div>
+                <div class="ingredient-actions">
+                    <button type="button" class="btn-add-new" 
+                            onclick="openIngredientModal('ingredient-${ingredientCounter}')">
+                        + New
+                    </button>
+                    <button type="button" class="btn-remove" onclick="removeIngredientRow('${rowId}')">
+                        ✕
+                    </button>
+                </div>
+            `;
+            
+            container.appendChild(rowDiv);
+            
+            // Add drag and drop functionality
+            setupDragAndDrop(rowDiv);
+            
+            // Update ingredients data
+            updateIngredientsData();
+        }
+        
+        /**
+         * Remove an ingredient row
+         */
+        function removeIngredientRow(rowId) {
+            const row = document.querySelector(`[data-row-id="${rowId}"]`);
+            if (row) {
+                // Don't allow removing the last ingredient
+                const remainingRows = document.querySelectorAll('.ingredient-row').length;
+                if (remainingRows <= 1) {
+                    alert('At least one ingredient is required for a beverage.');
+                    return;
+                }
+                
+                row.remove();
+                updateIngredientsData();
+                saveProgress();
+                updateRecipePreview();
+            }
+        }
+        
+        /**
+         * Update ingredients data array from DOM
+         */
+        function updateIngredientsData() {
+            ingredientsData = [];
+            const rows = document.querySelectorAll('.ingredient-row');
+            
+            rows.forEach((row, index) => {
+                const select = row.querySelector('.ingredient-select');
+                const amount = row.querySelector('.ingredient-amount');
+                const unit = row.querySelector('.ingredient-unit');
+                
+                if (select.value) { // Only include rows with selected ingredients
+                    ingredientsData.push({
+                        name: select.value,
+                        amount: parseFloat(amount.value) || 0,
+                        unit: unit.value,
+                        order: index + 1
+                    });
+                }
+            });
+            
+            // Check for duplicates and highlight them
+            validateIngredients();
+        }
+        
+        /**
+         * Validate ingredients and check for duplicates
+         */
+        function validateIngredients() {
+            const rows = document.querySelectorAll('.ingredient-row');
+            const ingredientCounts = {};
+            
+            // Clear previous validation styles
+            rows.forEach(row => {
+                row.classList.remove('duplicate-ingredient');
+                const select = row.querySelector('.ingredient-select');
+                select.style.borderColor = '';
+                select.title = '';
+            });
+            
+            // Count ingredient occurrences
+            rows.forEach(row => {
+                const select = row.querySelector('.ingredient-select');
+                const ingredientName = select.value;
+                
+                if (ingredientName) {
+                    ingredientCounts[ingredientName] = (ingredientCounts[ingredientName] || 0) + 1;
+                }
+            });
+            
+            // Highlight duplicates
+            rows.forEach(row => {
+                const select = row.querySelector('.ingredient-select');
+                const ingredientName = select.value;
+                
+                if (ingredientName && ingredientCounts[ingredientName] > 1) {
+                    row.classList.add('duplicate-ingredient');
+                    select.style.borderColor = '#dc3545';
+                    select.title = `Warning: ${ingredientName} appears ${ingredientCounts[ingredientName]} times in this recipe`;
+                }
+            });
+            
+            return Object.values(ingredientCounts).some(count => count > 1);
+        }
+        
+        /**
+         * Validate ingredient amounts
+         */
+        function validateIngredientAmounts() {
+            const rows = document.querySelectorAll('.ingredient-row');
+            let hasErrors = false;
+            
+            rows.forEach(row => {
+                const select = row.querySelector('.ingredient-select');
+                const amount = row.querySelector('.ingredient-amount');
+                
+                // Clear previous validation
+                amount.style.borderColor = '';
+                amount.title = '';
+                
+                if (select.value && (!amount.value || parseFloat(amount.value) <= 0)) {
+                    amount.style.borderColor = '#dc3545';
+                    amount.title = 'Amount must be greater than 0';
+                    hasErrors = true;
+                }
+            });
+            
+            return hasErrors;
+        }
+        
+        /**
+         * Setup drag and drop for ingredient rows
+         */
+        function setupDragAndDrop(row) {
+            row.addEventListener('dragstart', function(e) {
+                e.dataTransfer.setData('text/plain', '');
+                this.classList.add('dragging');
+            });
+            
+            row.addEventListener('dragend', function(e) {
+                this.classList.remove('dragging');
+                updateIngredientsData();
+                saveProgress();
+                updateRecipePreview();
+            });
+            
+            row.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                const draggingElement = document.querySelector('.dragging');
+                const siblings = [...this.parentNode.querySelectorAll('.ingredient-row:not(.dragging)')];
+                
+                const nextSibling = siblings.find(sibling => {
+                    return e.clientY <= sibling.offsetTop + sibling.offsetHeight / 2;
+                });
+                
+                this.parentNode.insertBefore(draggingElement, nextSibling);
+            });
+        }
+        
         // Progress saving/loading
         function saveProgress() {
             const formData = new FormData(document.getElementById('beverage-form'));
             const progress = {};
+            
+            // Save basic form data (excluding dynamic ingredient fields)
             for (let [key, value] of formData.entries()) {
-                progress[key] = value;
+                if (!key.startsWith('ingredient-') && !key.startsWith('amount-') && !key.startsWith('unit-')) {
+                    progress[key] = value;
+                }
             }
+            
+            // Save dynamic ingredients data
+            updateIngredientsData();
+            progress.ingredients = ingredientsData;
+            
             localStorage.setItem('beverageProgress', JSON.stringify(progress));
             document.getElementById('progress-indicator').style.display = 'block';
         }
@@ -621,12 +922,33 @@
             const saved = localStorage.getItem('beverageProgress');
             if (saved) {
                 const progress = JSON.parse(saved);
+                
+                // Load basic form fields
                 Object.keys(progress).forEach(key => {
-                    const element = document.getElementById(key);
-                    if (element) {
-                        element.value = progress[key];
+                    if (key !== 'ingredients') {
+                        const element = document.getElementById(key);
+                        if (element) {
+                            element.value = progress[key];
+                        }
                     }
                 });
+                
+                // Load dynamic ingredients
+                if (progress.ingredients && progress.ingredients.length > 0) {
+                    // Clear existing rows first
+                    const container = document.getElementById('ingredients-container');
+                    container.innerHTML = '';
+                    ingredientCounter = 0;
+                    ingredientsData = [];
+                    
+                    // Add saved ingredients
+                    progress.ingredients.forEach(ingredient => {
+                        addIngredientRow(ingredient);
+                    });
+                    
+                    updateIngredientsData();
+                }
+                
                 document.getElementById('progress-indicator').style.display = 'block';
             }
         }
@@ -640,6 +962,9 @@
         function updateRecipePreview() {
             const form = document.getElementById('beverage-form');
             const formData = new FormData(form);
+            
+            // Update ingredients data before preview
+            updateIngredientsData();
             
             let preview = '<div>';
             
@@ -658,23 +983,18 @@
                 preview += `<p><strong>Glass:</strong> ${glass}</p>`;
             }
             
-            preview += '<h5>Ingredients:</h5><ul>';
-            
-            const primary = formData.get('primaryIngredient');
-            const primaryAmount = formData.get('primaryAmount');
-            const primaryUnit = formData.get('primaryUnit');
-            if (primary) {
-                preview += `<li>${primaryAmount || '?'} ${primaryUnit || 'oz'} ${primary}</li>`;
+            // Display dynamic ingredients
+            preview += '<h5>Ingredients:</h5>';
+            if (ingredientsData.length > 0) {
+                preview += '<ul>';
+                ingredientsData.forEach(ingredient => {
+                    const amount = ingredient.amount > 0 ? ingredient.amount : '?';
+                    preview += `<li>${amount} ${ingredient.unit} ${ingredient.name}</li>`;
+                });
+                preview += '</ul>';
+            } else {
+                preview += '<p class="text-muted">No ingredients added yet.</p>';
             }
-            
-            const secondary = formData.get('secondaryIngredient');
-            const secondaryAmount = formData.get('secondaryAmount');
-            const secondaryUnit = formData.get('secondaryUnit');
-            if (secondary) {
-                preview += `<li>${secondaryAmount || '?'} ${secondaryUnit || 'oz'} ${secondary}</li>`;
-            }
-            
-            preview += '</ul>';
             
             const garnish = formData.get('garnish');
             if (garnish) {
@@ -688,7 +1008,7 @@
             
             preview += '</div>';
             
-            if (!name && !primary) {
+            if (!name && ingredientsData.length === 0) {
                 preview = '<p class="text-muted">Fill out the form to see your recipe preview here.</p>';
             }
             
@@ -702,12 +1022,10 @@
             document.getElementById('ingredientName').focus();
             
             // Pre-populate category if we can infer from context
-            if (targetDropdown === 'primaryIngredient') {
-                const type = document.getElementById('beverageType').value;
-                if (type === 'Cocktail') {
-                    // Suggest spirit category for cocktails
-                    document.getElementById('category').value = 'Gin';
-                }
+            const type = document.getElementById('beverageType').value;
+            if (type === 'Cocktail') {
+                // Suggest spirit category for cocktails
+                document.getElementById('category').value = 'Gin';
             }
         }
         
@@ -739,6 +1057,36 @@
         document.getElementById('beverage-form').addEventListener('submit', function(e) {
             e.preventDefault();
             
+            // Validate ingredients
+            updateIngredientsData();
+            if (ingredientsData.length === 0) {
+                showMessage('main-message', 'At least one ingredient is required.', 'error');
+                return;
+            }
+            
+            // Check for validation errors
+            const hasAmountErrors = validateIngredientAmounts();
+            const hasDuplicates = validateIngredients();
+            
+            if (hasAmountErrors) {
+                showMessage('main-message', 'Please fix ingredient amount errors (red borders).', 'error');
+                return;
+            }
+            
+            // Check for missing ingredient data
+            const incompleteIngredients = ingredientsData.filter(ing => !ing.name || ing.amount <= 0);
+            if (incompleteIngredients.length > 0) {
+                showMessage('main-message', 'Please fill in all ingredient details (name and amount).', 'error');
+                return;
+            }
+            
+            // Warn about duplicates but allow submission
+            if (hasDuplicates) {
+                if (!confirm('Warning: This recipe contains duplicate ingredients. Do you want to continue?')) {
+                    return;
+                }
+            }
+            
             const submitText = document.getElementById('submit-text');
             const submitLoading = document.getElementById('submit-loading');
             
@@ -747,9 +1095,18 @@
             
             const formData = new FormData(this);
             const beverageData = {};
+            
+            // Collect basic form data (excluding ingredient fields)
             for (let [key, value] of formData.entries()) {
-                beverageData[key] = value;
+                if (!key.startsWith('ingredient-') && !key.startsWith('amount-') && !key.startsWith('unit-')) {
+                    beverageData[key] = value;
+                }
             }
+            
+            // Add ingredients array
+            beverageData.ingredients = ingredientsData;
+            
+            console.log('Submitting beverage data:', beverageData);
             
             // Call server function to save beverage
             google.script.run
@@ -802,9 +1159,13 @@
                     
                     // Auto-select in target dropdown if specified
                     if (currentTargetDropdown) {
-                        document.getElementById(currentTargetDropdown).value = newIngredient;
-                        saveProgress();
-                        updateRecipePreview();
+                        const targetElement = document.querySelector(`[name="${currentTargetDropdown}"]`);
+                        if (targetElement) {
+                            targetElement.value = newIngredient;
+                            updateIngredientsData();
+                            saveProgress();
+                            updateRecipePreview();
+                        }
                     }
                     
                     // Update recent ingredients
@@ -828,14 +1189,13 @@
         
         // Update ingredient dropdowns
         function updateIngredientDropdowns() {
-            const dropdowns = ['primaryIngredient', 'secondaryIngredient'];
+            const dropdowns = document.querySelectorAll('.ingredient-select');
             
-            dropdowns.forEach(dropdownId => {
-                const dropdown = document.getElementById(dropdownId);
+            dropdowns.forEach(dropdown => {
                 const currentValue = dropdown.value;
                 
                 // Clear and rebuild options
-                dropdown.innerHTML = `<option value="">-- Select ${dropdownId.includes('primary') ? 'Primary' : 'Secondary'} Ingredient --</option>`;
+                dropdown.innerHTML = '<option value="">-- Select Ingredient --</option>';
                 
                 availableIngredients.forEach(ingredient => {
                     const option = document.createElement('option');
@@ -881,6 +1241,16 @@
         // Clear form function
         function clearForm() {
             document.getElementById('beverage-form').reset();
+            
+            // Clear dynamic ingredients
+            const container = document.getElementById('ingredients-container');
+            container.innerHTML = '';
+            ingredientCounter = 0;
+            ingredientsData = [];
+            
+            // Add back one default ingredient row
+            addIngredientRow();
+            
             updateRecipePreview();
             hideMessage('main-message');
         }
