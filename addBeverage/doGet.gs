@@ -2,7 +2,7 @@
  * Serves the HTML for the Beverage Data Entry form.
  * Fetches ingredient names and base spirits for dropdowns.
  */
-function doGet(e) {
+function doGetBeverage(e) {
   try {
     const template = HtmlService.createTemplateFromFile('addBeverage/beverageForm');
     const formData = getDataForBeverageForm(); // Fetch both ingredient names and spirits

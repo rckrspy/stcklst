@@ -10,8 +10,8 @@
  * @param {object} e The event parameter for a GET request.
  * @return {HtmlService.HtmlOutput} The HTML output to be rendered.
  */
-function doGet(e) {
-  Logger.log("doGet triggered for Ingredient App.");
+function doGetIngredient(e) {
+  Logger.log("doGetIngredient triggered for Ingredient App.");
   return HtmlService.createTemplateFromFile('addIngredient/ingredientForm')
       .evaluate()
       .setTitle('Add Ingredient')
