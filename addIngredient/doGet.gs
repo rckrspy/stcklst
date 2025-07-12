@@ -12,7 +12,7 @@
  */
 function doGet(e) {
   Logger.log("doGet triggered for Ingredient App.");
-  return HtmlService.createTemplateFromFile('addIngredient_index')
+  return HtmlService.createTemplateFromFile('ingredientForm')
       .evaluate()
       .setTitle('Add Ingredient')
       .addMetaTag('viewport', 'width=device-width, initial-scale=1')
