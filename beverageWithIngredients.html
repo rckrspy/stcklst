@@ -577,13 +577,48 @@
                     </label>
                     <select id="beverageType" name="beverageType">
                         <option value="">-- Select Type --</option>
-                        <option value="Cocktail">Cocktail</option>
-                        <option value="Zero-Proof Cocktail">Zero-Proof Cocktail</option>
-                        <option value="Mocktail">Mocktail</option>
-                        <option value="Mixed Drink">Mixed Drink</option>
-                        <option value="Beer & Other Fermented">Beer & Other Fermented</option>
-                        <option value="Wine & Sparkling Wine">Wine & Sparkling Wine</option>
-                        <option value="Spirit Pour (Neat/Rocks)">Spirit Pour (Neat/Rocks)</option>
+                        
+                        <optgroup label="Cocktail">
+                            <option value="Classic Cocktail">Classic Cocktail</option>
+                            <option value="Modern / Craft Cocktail">Modern / Craft Cocktail</option>
+                            <option value="Tiki Cocktail">Tiki Cocktail</option>
+                            <option value="Seasonal Cocktail">Seasonal Cocktail</option>
+                        </optgroup>
+                        
+                        <optgroup label="Zero-Proof Cocktail">
+                            <option value="Classic Zero-Proof">Classic Zero-Proof</option>
+                            <option value="Innovative Zero-Proof">Innovative Zero-Proof</option>
+                            <option value="Functional Beverage">Functional Beverage</option>
+                        </optgroup>
+                        
+                        <optgroup label="Mixed Drink">
+                            <option value="Simple Mixed Drink">Simple Mixed Drink</option>
+                            <option value="Complex Mixed Drink">Complex Mixed Drink</option>
+                            <option value="Batched Mixed Drink">Batched Mixed Drink</option>
+                        </optgroup>
+                        
+                        <optgroup label="Beer & Other Fermented">
+                            <option value="Draft Beer">Draft Beer</option>
+                            <option value="Bottled/Canned Beer">Bottled/Canned Beer</option>
+                            <option value="Cider">Cider</option>
+                            <option value="Kombucha">Kombucha</option>
+                            <option value="Sake">Sake</option>
+                        </optgroup>
+                        
+                        <optgroup label="Wine & Sparkling Wine">
+                            <option value="Still Wine">Still Wine</option>
+                            <option value="Sparkling Wine">Sparkling Wine</option>
+                            <option value="Fortified Wine">Fortified Wine</option>
+                            <option value="Wine Cocktail">Wine Cocktail</option>
+                        </optgroup>
+                        
+                        <optgroup label="Spirit Pour (Neat/Rocks)">
+                            <option value="Premium Pour">Premium Pour</option>
+                            <option value="Well Pour">Well Pour</option>
+                            <option value="Aged Spirit">Aged Spirit</option>
+                            <option value="Flight/Tasting">Flight/Tasting</option>
+                        </optgroup>
+                        
                         <option value="Other Beverage">Other Beverage</option>
                     </select>
                 </div>
@@ -597,6 +632,20 @@
                         <option value="Kegged">Kegged</option>
                         <option value="Pre-batched Bottle Service">Pre-batched Bottle Service</option>
                         <option value="Large Format (Pitcher/Carafe)">Large Format (Pitcher/Carafe)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="glassType">Glass Type</label>
+                    <select id="glassType" name="glassType">
+                        <option value="">-- Select Glass --</option>
+                        <option value="Martini">Martini</option>
+                        <option value="Rocks">Rocks</option>
+                        <option value="Highball">Highball</option>
+                        <option value="Shot">Shot</option>
+                        <option value="Wine">Wine</option>
+                        <option value="Coupe">Coupe</option>
+                        <option value="Mug">Mug</option>
                     </select>
                 </div>
                 
@@ -650,20 +699,6 @@
                 </div>
                 
                 <!-- Additional Info -->
-                <div class="form-group">
-                    <label for="glassType">Glass Type</label>
-                    <select id="glassType" name="glassType">
-                        <option value="">-- Select Glass --</option>
-                        <option value="Martini">Martini</option>
-                        <option value="Rocks">Rocks</option>
-                        <option value="Highball">Highball</option>
-                        <option value="Shot">Shot</option>
-                        <option value="Wine">Wine</option>
-                        <option value="Coupe">Coupe</option>
-                        <option value="Mug">Mug</option>
-                    </select>
-                </div>
-                
                 <div class="form-group">
                     <label for="instructions">Instructions</label>
                     <textarea id="instructions" name="instructions" rows="4" 
@@ -1239,12 +1274,14 @@
                 });
                 preview += '</ul>';
                 
-                // Show menu items separately
+                // Enhanced Menu Summary - always show when items are marked for menu
                 const menuItems = ingredientsData.filter(ing => ing.showOnMenu);
-                if (menuItems.length > 0 && menuItems.length < ingredientsData.length) {
-                    preview += '<p><strong>Menu Items:</strong> ';
+                if (menuItems.length > 0) {
+                    preview += '<div style="background: #e8f4fd; padding: 10px; border-radius: 4px; margin: 10px 0; border-left: 4px solid #2196F3;">';
+                    preview += '<h6 style="margin: 0 0 5px 0; color: #0c5460;"><strong>📋 Menu Summary</strong></h6>';
+                    preview += '<p style="margin: 0; font-size: 14px;">';
                     preview += menuItems.map(ing => ing.name).join(', ');
-                    preview += '</p>';
+                    preview += '</p></div>';
                 }
             } else {
                 preview += '<p class="text-muted">No ingredients added yet.</p>';
