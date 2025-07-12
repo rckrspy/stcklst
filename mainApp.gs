@@ -250,7 +250,7 @@ function saveBeverageData(beverageData) {
         'Recipe_ID', 'Name', 'Description', 'Category', 'Difficulty',
         'Serving_Size', 'Prep_Time_Minutes', 'Total_Cost', 'Alcoholic',
         'Dietary_Tags', 'Instructions', 'Ice_Type', 'Build_Method', 
-        'Popularity_Rating', 'Glass_Type', 'Garnish', 'Created_Date', 
+        'Popularity_Rating', 'Glass_Type', 'Service_Method', 'Created_Date', 
         'Updated_Date', 'Version', 'Active'
       ];
       recipesSheet.getRange(1, 1, 1, recipeHeaders.length).setValues([recipeHeaders]);
@@ -261,7 +261,7 @@ function saveBeverageData(beverageData) {
       recipeIngredientsSheet = ss.insertSheet('Recipe_Ingredients');
       const relationshipHeaders = [
         'Relationship_ID', 'Recipe_ID', 'Ingredient_ID', 'Quantity', 'Unit',
-        'Preparation_Method', 'Substitution_Allowed', 'Garnish_Flag',
+        'Preferred_Brand', 'Preparation_Method', 'Substitution_Allowed', 'Garnish_Flag',
         'Critical_Ingredient', 'Cost_Contribution', 'Order_Sequence', 'Show_On_Menu'
       ];
       recipeIngredientsSheet.getRange(1, 1, 1, relationshipHeaders.length).setValues([relationshipHeaders]);
@@ -292,7 +292,7 @@ function saveBeverageData(beverageData) {
       beverageData.buildMethod || '',
       parseInt(beverageData.popularityRating) || 5,
       beverageData.glassType || '',
-      beverageData.garnish || '',
+      beverageData.serviceMethod || '',
       now,
       now,
       '1.0', // version
@@ -315,6 +315,7 @@ function saveBeverageData(beverageData) {
         ingredientId,
         ingredient.amount,
         ingredient.unit,
+        ingredient.preferredBrand || '',
         '', // preparation method
         false, // substitution allowed
         false, // garnish flag

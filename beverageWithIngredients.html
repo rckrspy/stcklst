@@ -375,6 +375,12 @@
             min-width: 150px;
         }
         
+        .ingredient-brand {
+            flex: 1.5;
+            min-width: 120px;
+            font-size: 13px;
+        }
+        
         .ingredient-amount {
             flex: 1;
             min-width: 80px;
@@ -410,6 +416,53 @@
         .checkbox-text {
             font-size: 11px;
             white-space: nowrap;
+        }
+        
+        /* === Help Icon Styles === */
+        .help-icon {
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-left: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+        }
+        
+        .help-icon:hover {
+            background: #0056b3;
+        }
+        
+        /* === Help Modal Styles === */
+        .help-definition {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .help-definition:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        
+        .help-definition h4 {
+            color: #2c3e50;
+            margin: 0 0 8px 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        .help-definition p {
+            margin: 0;
+            color: #555;
+            line-height: 1.5;
         }
         
         .ingredient-actions {
@@ -518,15 +571,32 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="beverageType">Beverage Type</label>
+                    <label for="beverageType">
+                        Beverage Type 
+                        <button type="button" class="help-icon" onclick="openBeverageTypeHelp()" title="Help">?</button>
+                    </label>
                     <select id="beverageType" name="beverageType">
                         <option value="">-- Select Type --</option>
                         <option value="Cocktail">Cocktail</option>
+                        <option value="Zero-Proof Cocktail">Zero-Proof Cocktail</option>
                         <option value="Mocktail">Mocktail</option>
-                        <option value="Shot">Shot</option>
-                        <option value="Punch">Punch</option>
-                        <option value="Coffee Drink">Coffee Drink</option>
-                        <option value="Other">Other</option>
+                        <option value="Mixed Drink">Mixed Drink</option>
+                        <option value="Beer & Other Fermented">Beer & Other Fermented</option>
+                        <option value="Wine & Sparkling Wine">Wine & Sparkling Wine</option>
+                        <option value="Spirit Pour (Neat/Rocks)">Spirit Pour (Neat/Rocks)</option>
+                        <option value="Other Beverage">Other Beverage</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="serviceMethod">Service Method</label>
+                    <select id="serviceMethod" name="serviceMethod">
+                        <option value="">-- Select Service Method --</option>
+                        <option value="Individual Service">Individual Service</option>
+                        <option value="Draft/Batched">Draft/Batched</option>
+                        <option value="Kegged">Kegged</option>
+                        <option value="Pre-batched Bottle Service">Pre-batched Bottle Service</option>
+                        <option value="Large Format (Pitcher/Carafe)">Large Format (Pitcher/Carafe)</option>
                     </select>
                 </div>
                 
@@ -580,12 +650,6 @@
                 </div>
                 
                 <!-- Additional Info -->
-                <div class="form-group">
-                    <label for="garnish">Garnish</label>
-                    <input type="text" id="garnish" name="garnish" 
-                           placeholder="e.g., Lemon twist, Olive">
-                </div>
-                
                 <div class="form-group">
                     <label for="glassType">Glass Type</label>
                     <select id="glassType" name="glassType">
@@ -725,6 +789,57 @@
             </div>
         </div>
     </div>
+    
+    <!-- Beverage Type Help Modal -->
+    <div id="beverage-type-help-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Beverage Type Definitions</h3>
+                <button type="button" class="close-btn" onclick="closeBeverageTypeHelp()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="help-definition">
+                    <h4>Cocktail</h4>
+                    <p>A handcrafted alcoholic beverage made with two or more ingredients, typically a spirit mixed with mixers, juices, or syrups. (e.g., Margarita, Old Fashioned, Martini)</p>
+                </div>
+                
+                <div class="help-definition">
+                    <h4>Zero-Proof Cocktail</h4>
+                    <p>A sophisticated, non-alcoholic drink crafted to have the complexity and flavor profile of a cocktail, but without any alcohol. (e.g., a "spirit-free" gin & tonic)</p>
+                </div>
+                
+                <div class="help-definition">
+                    <h4>Mocktail</h4>
+                    <p>A non-alcoholic mixed drink, often a simple combination of juices, sodas, and garnishes.</p>
+                </div>
+                
+                <div class="help-definition">
+                    <h4>Mixed Drink</h4>
+                    <p>A simple alcoholic beverage made with a spirit and a single mixer. (e.g., Rum and Coke, Gin and Tonic, Vodka Soda)</p>
+                </div>
+                
+                <div class="help-definition">
+                    <h4>Beer & Other Fermented</h4>
+                    <p>Includes all types of beer, ciders, and hard seltzers.</p>
+                </div>
+                
+                <div class="help-definition">
+                    <h4>Wine & Sparkling Wine</h4>
+                    <p>Still wines (red, white, rosé) and sparkling wines (champagne, prosecco, cava, etc.).</p>
+                </div>
+                
+                <div class="help-definition">
+                    <h4>Spirit Pour (Neat/Rocks)</h4>
+                    <p>Liquor served by itself, either at room temperature (Neat) or over ice (On the Rocks).</p>
+                </div>
+                
+                <div class="help-definition">
+                    <h4>Other Beverage</h4>
+                    <p>Any other beverage not included in a category above. (e.g., bottled water, tea, coffee, energy drinks)</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         // Global variables
@@ -797,8 +912,12 @@
                             `<option value="${ing}" ${ingredient && ingredient.name === ing ? 'selected' : ''}>${ing}</option>`
                         ).join('')}
                     </select>
+                    <input type="text" class="ingredient-brand" name="brand-${ingredientCounter}" 
+                           placeholder="Preferred Brand" 
+                           value="${ingredient ? ingredient.preferredBrand || '' : ''}"
+                           onchange="updateIngredientsData(); saveProgress(); updateRecipePreview();">
                     <input type="number" class="ingredient-amount" name="amount-${ingredientCounter}" 
-                           placeholder="Amount" step="0.25" min="0" 
+                           placeholder="Amount" step="0.0625" min="0" 
                            value="${ingredient ? ingredient.amount || '' : ''}"
                            onchange="updateIngredientsData(); saveProgress(); updateRecipePreview();">
                     <select class="ingredient-unit" name="unit-${ingredientCounter}" 
@@ -822,10 +941,6 @@
                     </div>
                 </div>
                 <div class="ingredient-actions">
-                    <button type="button" class="btn-add-new" 
-                            onclick="openIngredientModal('ingredient-${ingredientCounter}')">
-                        + New
-                    </button>
                     <button type="button" class="btn-remove" onclick="removeIngredientRow('${rowId}')">
                         ✕
                     </button>
@@ -854,11 +969,32 @@
                     return;
                 }
                 
+                // Check if row has data before confirming
+                const hasData = checkRowHasData(row);
+                if (hasData) {
+                    if (!confirm('This ingredient row has data. Are you sure you want to remove it?')) {
+                        return;
+                    }
+                }
+                
                 row.remove();
                 updateIngredientsData();
                 saveProgress();
                 updateRecipePreview();
             }
+        }
+        
+        /**
+         * Check if ingredient row has any data
+         */
+        function checkRowHasData(row) {
+            const select = row.querySelector('.ingredient-select');
+            const brand = row.querySelector('.ingredient-brand');
+            const amount = row.querySelector('.ingredient-amount');
+            
+            return (select && select.value) || 
+                   (brand && brand.value.trim()) || 
+                   (amount && amount.value);
         }
         
         /**
@@ -870,6 +1006,7 @@
             
             rows.forEach((row, index) => {
                 const select = row.querySelector('.ingredient-select');
+                const brand = row.querySelector('.ingredient-brand');
                 const amount = row.querySelector('.ingredient-amount');
                 const unit = row.querySelector('.ingredient-unit');
                 const menuCheckbox = row.querySelector('.menu-checkbox');
@@ -877,6 +1014,7 @@
                 if (select.value) { // Only include rows with selected ingredients
                     ingredientsData.push({
                         name: select.value,
+                        preferredBrand: brand ? brand.value : '',
                         amount: parseFloat(amount.value) || 0,
                         unit: unit.value,
                         showOnMenu: menuCheckbox ? menuCheckbox.checked : true,
@@ -1063,6 +1201,11 @@
                 preview += `<p><strong>Type:</strong> ${type}</p>`;
             }
             
+            const serviceMethod = formData.get('serviceMethod');
+            if (serviceMethod) {
+                preview += `<p><strong>Service:</strong> ${serviceMethod}</p>`;
+            }
+            
             const buildMethod = formData.get('buildMethod');
             if (buildMethod) {
                 preview += `<p><strong>Build Method:</strong> ${buildMethod}</p>`;
@@ -1090,8 +1233,9 @@
                 preview += '<ul>';
                 ingredientsData.forEach(ingredient => {
                     const amount = ingredient.amount > 0 ? ingredient.amount : '?';
+                    const brand = ingredient.preferredBrand ? ` (${ingredient.preferredBrand})` : '';
                     const menuIndicator = ingredient.showOnMenu ? '📋' : '';
-                    preview += `<li>${amount} ${ingredient.unit} ${ingredient.name} ${menuIndicator}</li>`;
+                    preview += `<li>${amount} ${ingredient.unit} ${ingredient.name}${brand} ${menuIndicator}</li>`;
                 });
                 preview += '</ul>';
                 
@@ -1104,11 +1248,6 @@
                 }
             } else {
                 preview += '<p class="text-muted">No ingredients added yet.</p>';
-            }
-            
-            const garnish = formData.get('garnish');
-            if (garnish) {
-                preview += `<p><strong>Garnish:</strong> ${garnish}</p>`;
             }
             
             const instructions = formData.get('instructions');
@@ -1144,6 +1283,15 @@
             document.getElementById('ingredient-form').reset();
             hideMessage('ingredient-message');
             currentTargetDropdown = null;
+        }
+        
+        // Help modal functions
+        function openBeverageTypeHelp() {
+            document.getElementById('beverage-type-help-modal').style.display = 'block';
+        }
+        
+        function closeBeverageTypeHelp() {
+            document.getElementById('beverage-type-help-modal').style.display = 'none';
         }
         
         // Message functions
@@ -1325,8 +1473,15 @@
         function updateRecentIngredients(newIngredient) {
             let recent = JSON.parse(localStorage.getItem('recentIngredients') || '[]');
             
-            // Add new ingredient to the beginning
-            recent.unshift(newIngredient);
+            // Add new ingredient if provided and valid
+            if (newIngredient && typeof newIngredient === 'string' && newIngredient.trim()) {
+                // Add to the beginning and remove duplicates
+                recent = recent.filter(ing => ing !== newIngredient);
+                recent.unshift(newIngredient);
+            }
+            
+            // Filter out null, undefined, empty strings
+            recent = recent.filter(ing => ing && typeof ing === 'string' && ing.trim());
             
             // Keep only the last 5
             recent = recent.slice(0, 5);
@@ -1350,6 +1505,14 @@
         
         // Clear form function
         function clearForm() {
+            // Check if form has any data
+            const hasFormData = checkFormHasData();
+            if (hasFormData) {
+                if (!confirm('This form has data. Are you sure you want to clear everything?')) {
+                    return;
+                }
+            }
+            
             document.getElementById('beverage-form').reset();
             
             // Clear dynamic ingredients
@@ -1365,11 +1528,43 @@
             hideMessage('main-message');
         }
         
-        // Close modal when clicking outside
+        /**
+         * Check if form has any data
+         */
+        function checkFormHasData() {
+            const form = document.getElementById('beverage-form');
+            const formData = new FormData(form);
+            
+            // Check basic form fields
+            for (let [key, value] of formData.entries()) {
+                if (!key.startsWith('ingredient-') && !key.startsWith('amount-') && 
+                    !key.startsWith('unit-') && !key.startsWith('brand-') && 
+                    !key.startsWith('menu-') && value && value.trim()) {
+                    return true;
+                }
+            }
+            
+            // Check if there are any ingredient rows with data
+            const rows = document.querySelectorAll('.ingredient-row');
+            for (let row of rows) {
+                if (checkRowHasData(row)) {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+        
+        // Close modals when clicking outside
         window.onclick = function(event) {
-            const modal = document.getElementById('ingredient-modal');
-            if (event.target === modal) {
+            const ingredientModal = document.getElementById('ingredient-modal');
+            const helpModal = document.getElementById('beverage-type-help-modal');
+            
+            if (event.target === ingredientModal) {
                 closeIngredientModal();
+            }
+            if (event.target === helpModal) {
+                closeBeverageTypeHelp();
             }
         }
     </script>
