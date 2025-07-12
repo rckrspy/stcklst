@@ -249,8 +249,9 @@ function saveBeverageData(beverageData) {
       const recipeHeaders = [
         'Recipe_ID', 'Name', 'Description', 'Category', 'Difficulty',
         'Serving_Size', 'Prep_Time_Minutes', 'Total_Cost', 'Alcoholic',
-        'Dietary_Tags', 'Instructions', 'Created_Date', 'Updated_Date',
-        'Version', 'Active'
+        'Dietary_Tags', 'Instructions', 'Ice_Type', 'Build_Method', 
+        'Popularity_Rating', 'Glass_Type', 'Garnish', 'Created_Date', 
+        'Updated_Date', 'Version', 'Active'
       ];
       recipesSheet.getRange(1, 1, 1, recipeHeaders.length).setValues([recipeHeaders]);
       recipesSheet.setFrozenRows(1);
@@ -261,7 +262,7 @@ function saveBeverageData(beverageData) {
       const relationshipHeaders = [
         'Relationship_ID', 'Recipe_ID', 'Ingredient_ID', 'Quantity', 'Unit',
         'Preparation_Method', 'Substitution_Allowed', 'Garnish_Flag',
-        'Critical_Ingredient', 'Cost_Contribution', 'Order_Sequence'
+        'Critical_Ingredient', 'Cost_Contribution', 'Order_Sequence', 'Show_On_Menu'
       ];
       recipeIngredientsSheet.getRange(1, 1, 1, relationshipHeaders.length).setValues([relationshipHeaders]);
       recipeIngredientsSheet.setFrozenRows(1);
@@ -287,6 +288,11 @@ function saveBeverageData(beverageData) {
       true, // alcoholic (assume true for beverages)
       '', // dietary tags
       beverageData.instructions || '',
+      beverageData.iceType || '',
+      beverageData.buildMethod || '',
+      parseInt(beverageData.popularityRating) || 5,
+      beverageData.glassType || '',
+      beverageData.garnish || '',
       now,
       now,
       '1.0', // version
@@ -314,7 +320,8 @@ function saveBeverageData(beverageData) {
         false, // garnish flag
         index === 0, // first ingredient is critical
         0, // cost contribution (would calculate from ingredient cost)
-        ingredient.order || (index + 1)
+        ingredient.order || (index + 1),
+        ingredient.showOnMenu !== false // default to true
       ];
       
       recipeIngredientsSheet.appendRow(relationshipRow);

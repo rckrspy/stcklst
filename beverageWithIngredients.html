@@ -385,6 +385,33 @@
             min-width: 80px;
         }
         
+        .menu-indicator {
+            flex: 0 0 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin: 0;
+            font-size: 12px;
+            color: #6c757d;
+        }
+        
+        .menu-checkbox {
+            margin: 0;
+            width: 16px;
+            height: 16px;
+        }
+        
+        .checkbox-text {
+            font-size: 11px;
+            white-space: nowrap;
+        }
+        
         .ingredient-actions {
             display: flex;
             gap: 5px;
@@ -503,12 +530,45 @@
                     </select>
                 </div>
                 
+                <div class="form-group">
+                    <label for="iceType">Ice Type</label>
+                    <select id="iceType" name="iceType">
+                        <option value="">-- Select Ice Type --</option>
+                        <option value="None (Served Up/Neat)">None (Served Up/Neat)</option>
+                        <option value="Regular Cubes">Regular Cubes</option>
+                        <option value="Large Cube/Sphere">Large Cube/Sphere</option>
+                        <option value="Pebble Ice/Crushed">Pebble Ice/Crushed</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="buildMethod">Build Method</label>
+                    <select id="buildMethod" name="buildMethod">
+                        <option value="">-- Select Build Method --</option>
+                        <option value="Shaken">Shaken</option>
+                        <option value="Stirred">Stirred</option>
+                        <option value="Built in Glass">Built in Glass</option>
+                        <option value="Served Neat/As-Is">Served Neat/As-Is</option>
+                        <option value="Blended">Blended</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="popularityRating">Popularity Rating (1-10)</label>
+                    <input type="number" id="popularityRating" name="popularityRating" 
+                           min="1" max="10" value="5" step="1"
+                           title="Rate from 1 (least popular) to 10 (most popular)">
+                    <small class="text-muted">Default: 5 (moderate popularity)</small>
+                </div>
+                
                 <!-- Dynamic Ingredients Section -->
                 <div class="form-group">
                     <div class="ingredients-header">
                         <label>Recipe Ingredients *</label>
                         <button type="button" class="btn btn-success btn-sm" onclick="addIngredientRow()">
-                            ➕ Add Ingredient
+                            ➕ Add Ingredient Row
                         </button>
                     </div>
                     <div id="ingredients-container">
@@ -568,7 +628,7 @@
             <h4>Quick Actions</h4>
             <button type="button" class="btn btn-success" style="width: 100%; margin-bottom: 10px;" 
                     onclick="openIngredientModal()">
-                ➕ Add Ingredient
+                🆕 Create New Ingredient
             </button>
             
             <div class="progress-indicator">
@@ -669,10 +729,25 @@
     <script>
         // Global variables
         let currentTargetDropdown = null;
-        let availableIngredients = <?= JSON.stringify(ingredientNames || []) ?>;
-        let baseSpirits = <?= JSON.stringify(baseSpirits || []) ?>;
+        let availableIngredients = [];
+        let baseSpirits = [];
         let ingredientCounter = 0;
         let ingredientsData = [];
+        
+        // Safe initialization of ingredient data
+        try {
+            const ingredientNamesData = <?= JSON.stringify(ingredientNames || []) ?>;
+            const baseSpiritsData = <?= JSON.stringify(baseSpirits || []) ?>;
+            
+            availableIngredients = Array.isArray(ingredientNamesData) ? ingredientNamesData : [];
+            baseSpirits = Array.isArray(baseSpiritsData) ? baseSpiritsData : [];
+            
+            console.log('Ingredients loaded:', availableIngredients.length, 'Base spirits loaded:', baseSpirits.length);
+        } catch (error) {
+            console.error('Error loading ingredient data:', error);
+            availableIngredients = [];
+            baseSpirits = [];
+        }
         
         // Initialize the app
         document.addEventListener('DOMContentLoaded', function() {
@@ -718,7 +793,7 @@
                     <select class="ingredient-select" name="ingredient-${ingredientCounter}" 
                             onchange="updateIngredientsData(); saveProgress(); updateRecipePreview();">
                         <option value="">-- Select Ingredient --</option>
-                        ${availableIngredients.map(ing => 
+                        ${(availableIngredients || []).map(ing => 
                             `<option value="${ing}" ${ingredient && ingredient.name === ing ? 'selected' : ''}>${ing}</option>`
                         ).join('')}
                     </select>
@@ -737,6 +812,14 @@
                         <option value="splash" ${ingredient && ingredient.unit === 'splash' ? 'selected' : ''}>splash</option>
                         <option value="each" ${ingredient && ingredient.unit === 'each' ? 'selected' : ''}>each</option>
                     </select>
+                    <div class="menu-indicator">
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="menu-checkbox" name="menu-${ingredientCounter}" 
+                                   ${ingredient && ingredient.showOnMenu !== false ? 'checked' : 'checked'}
+                                   onchange="updateIngredientsData(); saveProgress(); updateRecipePreview();">
+                            <span class="checkbox-text">Menu</span>
+                        </label>
+                    </div>
                 </div>
                 <div class="ingredient-actions">
                     <button type="button" class="btn-add-new" 
@@ -789,12 +872,14 @@
                 const select = row.querySelector('.ingredient-select');
                 const amount = row.querySelector('.ingredient-amount');
                 const unit = row.querySelector('.ingredient-unit');
+                const menuCheckbox = row.querySelector('.menu-checkbox');
                 
                 if (select.value) { // Only include rows with selected ingredients
                     ingredientsData.push({
                         name: select.value,
                         amount: parseFloat(amount.value) || 0,
                         unit: unit.value,
+                        showOnMenu: menuCheckbox ? menuCheckbox.checked : true,
                         order: index + 1
                     });
                 }
@@ -978,9 +1063,25 @@
                 preview += `<p><strong>Type:</strong> ${type}</p>`;
             }
             
+            const buildMethod = formData.get('buildMethod');
+            if (buildMethod) {
+                preview += `<p><strong>Build Method:</strong> ${buildMethod}</p>`;
+            }
+            
+            const iceType = formData.get('iceType');
+            if (iceType) {
+                preview += `<p><strong>Ice:</strong> ${iceType}</p>`;
+            }
+            
             const glass = formData.get('glassType');
             if (glass) {
                 preview += `<p><strong>Glass:</strong> ${glass}</p>`;
+            }
+            
+            const popularity = formData.get('popularityRating');
+            if (popularity) {
+                const stars = '★'.repeat(parseInt(popularity)) + '☆'.repeat(10 - parseInt(popularity));
+                preview += `<p><strong>Popularity:</strong> ${popularity}/10 ${stars}</p>`;
             }
             
             // Display dynamic ingredients
@@ -989,9 +1090,18 @@
                 preview += '<ul>';
                 ingredientsData.forEach(ingredient => {
                     const amount = ingredient.amount > 0 ? ingredient.amount : '?';
-                    preview += `<li>${amount} ${ingredient.unit} ${ingredient.name}</li>`;
+                    const menuIndicator = ingredient.showOnMenu ? '📋' : '';
+                    preview += `<li>${amount} ${ingredient.unit} ${ingredient.name} ${menuIndicator}</li>`;
                 });
                 preview += '</ul>';
+                
+                // Show menu items separately
+                const menuItems = ingredientsData.filter(ing => ing.showOnMenu);
+                if (menuItems.length > 0 && menuItems.length < ingredientsData.length) {
+                    preview += '<p><strong>Menu Items:</strong> ';
+                    preview += menuItems.map(ing => ing.name).join(', ');
+                    preview += '</p>';
+                }
             } else {
                 preview += '<p class="text-muted">No ingredients added yet.</p>';
             }
