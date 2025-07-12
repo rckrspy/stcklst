@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <title>Add Ingredient</title>
+  <style>
+    /* --- Existing styles --- */
+    body { font-family: sans-serif; }
+    .container { max-width: 720px; margin: 20px auto; padding: 20px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; position: relative; }
+    .form-group { margin-bottom: 20px; }
+    .form-group small { font-size: 0.8em; color: gray; display: block; margin-top: 5px; }
+    label { display: block; margin-bottom: 5px; font-weight: bold;}
+    input[type="text"], select, input[type="number"] { width: 100%; padding: 8px; box-sizing: border-box; margin-bottom: 5px; border: 1px solid #ccc; border-radius: 3px; }
+    select { appearance: auto; -webkit-appearance: auto; -moz-appearance: auto; background-color: #fff; }
+    .unit-size-group { display: flex; align-items: center; flex-wrap: wrap; /* Allow wrapping */ }
+    .unit-size-group label { display: inline-block; margin-right: 10px; margin-bottom: 0; font-weight: normal; }
+    .unit-size-options { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; flex-basis: 100%; /* Take full width initially */ order: 1; /* Show radios first */ }
+    .unit-size-option input[type="radio"] { margin-right: 5px; }
+    .unit-size-other { flex-grow: 1; order: 2; /* Show 'Other' input after radios */ min-width: 150px; /* Give 'Other' some minimum space */ }
+    .unit-size-other label { display: inline; margin-right: 5px; }
+    .unit-size-other input[type="text"] { width: auto; display: inline-block; min-width: 100px; }
+    #success-message, #error-message { display: none; padding: 10px; margin-bottom: 10px; border-radius: 5px; }
+    #success-message { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    #error-message { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    .checkbox-group { display: block; margin-bottom: 15px; /* Consistent spacing */ }
+    .checkbox-group input[type="checkbox"] { width: auto; margin-right: 8px; vertical-align: middle; /* Align checkbox better */ }
+    .checkbox-group label { display: inline-block; margin-bottom: 0; font-weight: normal; vertical-align: middle; }
+    .checkbox-group small { margin-left: 25px; /* Indent help text slightly */ }
+
+    /* ... (Rest of existing styles for modals, buttons etc.) ... */
+     #waiting-modal { display: none; position: fixed; z-index: 2; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); }
+    .modal-content { background-color: #fefefe; margin: 15% auto; padding: 20px; border: 1px solid #888; width: 80%; border-radius: 5px; text-align: center; }
+    .loader { border: 8px solid #f3f3f3; border-top: 8px solid #3498db; border-radius: 50%; width: 50px; height: 50px; animation: spin 2s linear infinite; margin: 0 auto 10px; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    #duplicate-modal { display: none; position: fixed; z-index: 3; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); }
+    .duplicate-modal-content { background-color: #fefefe; margin: 10% auto; padding: 20px; border: 1px solid #888; width: 90%; max-width: 900px; border-radius: 5px; font-size: 0.9em; }
+    .comparison-section { margin-bottom: 20px; border: 1px solid #eee; padding: 15px; border-radius: 3px; }
+    .comparison-section h3 { margin-top: 0; margin-bottom: 10px; }
+    .data-row { display: flex; justify-content: space-between; margin-bottom: 5px; padding: 3px 0; border-bottom: 1px dotted #eee;}
+     .data-row:last-child { border-bottom: none; }
+    .data-label { font-weight: bold; width: 40%; text-align: right; padding-right: 10px; }
+    .data-value { width: 60%; white-space: pre-wrap; word-break: break-word; }
+    .modal-buttons { text-align: center; margin-top: 20px; }
+     button { padding: 10px 15px; cursor: pointer; border-radius: 4px; border: 1px solid transparent; font-size: 1em; margin-left: 5px; }
+     button[type="submit"], .modal-buttons button { background-color: #007bff; color: white; border-color: #007bff; }
+     button[type="submit"]:hover, .modal-buttons button:hover { background-color: #0056b3; border-color: #0056b3; }
+     button[type="button"] { background-color: #6c757d; color: white; border-color: #6c757d; }
+     button[type="button"]:hover { background-color: #5a6268; border-color: #5a6268; }
+     .modal-buttons button[onclick*="keepExisting"], .modal-buttons button[onclick*="closeDuplicate"] { background-color: #6c757d; border-color: #6c757d;}
+     .modal-buttons button[onclick*="replaceIngredient"] { background-color: #ffc107; border-color: #ffc107; color: #212529;}
+     .modal-buttons button[onclick*="replaceIngredient"]:hover { background-color: #e0a800; border-color: #d39e00;}
+    .form-buttons { margin-top: 30px; text-align: right; border-top: 1px solid #eee; padding-top: 20px; }
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Add New Ingredient</h1>
+
+    <div id="success-message"></div>
+    <div id="error-message"></div>
+
+    <form id="ingredient-form">
+      <div class="form-group">
+        <label for="ingredientName">Ingredient Name:</label>
+        <input type="text" id="ingredientName" name="ingredientName" required maxlength="100">
+        <small>Unique ingredient name.</small>
+      </div>
+
+      <div class="form-group">
+        <label for="category">Category:</label>
+        <select id="category" name="category" required>
+          <option value="">-- Select One --</option>
+          <optgroup label="Base Spirits">
+            <option value="Vodka">Vodka</option>
+            <option value="Tequila">Tequila</option>
+            <option value="Bourbon">Bourbon</option>
+            <option value="Scotch">Scotch</option>
+            <option value="Gin">Gin</option>
+            <option value="Rum">Rum</option>
+            <option value="Brandy & Cognac">Brandy & Cognac</option>
+            <option value="American Whiskey">American Whiskey</option>
+            <option value="Canadian Whisky">Canadian Whisky</option>
+            <option value="Irish Whiskey">Irish Whiskey</option>
+            <option value="Japanese Whisky">Japanese Whisky</option>
+            <option value="Other Imported Whiskey">Other Imported Whiskey</option>
+            <option value="White Whiskey/Moonshine">White Whiskey/Moonshine</option>
+            <option value="Mezcal">Mezcal</option>
+            <option value="Soju">Soju</option>
+            <option value="Baijiu">Baijiu</option>
+          </optgroup>
+          <optgroup label="Liqueurs & Modifiers">
+            <option value="Liqueurs/Cordials/Schnapps">Liqueurs/Cordials/Schnapps</option>
+            <option value="Amaro, Aperitif & Vermouth">Amaro, Aperitif & Vermouth</option>
+          </optgroup>
+          <optgroup label="Non-Alcoholic & Alternatives">
+            <option value="Non-Alcoholic">Non-Alcoholic</option>
+            <option value="Ready to Drink">Ready to Drink</option>
+            <option value="Seltzers & Flavored Beverages">Seltzers & Flavored Beverages</option>
+          </optgroup>
+          <optgroup label="Mixers & Ingredients">
+            <option value="Mixers & Modifiers">Mixers & Modifiers</option>
+            <option value="Fresh Ingredients">Fresh Ingredients</option>
+            <option value="Garnishes & Accessories">Garnishes & Accessories</option>
+          </optgroup>
+          <optgroup label="Legacy Categories">
+            <option value="Wine">Wine</option>
+            <option value="Beer">Beer</option>
+            <option value="Coffee">Coffee</option>
+            <option value="Tea">Tea</option>
+            <option value="Other">Other</option>
+          </optgroup>
+        </select>
+        <small>Select the commercial category that best describes this ingredient. Categories are organized by industry standards.</small>
+      </div>
+
+      <div class="form-group">
+        <label for="labelBrand">Label/Brand:</label>
+        <input type="text" id="labelBrand" name="labelBrand" maxlength="200" placeholder="e.g., Maker's Mark, Fresh Squeezed">
+        <small>Specific brand or type recommendation. Separate multiple with commas if applicable.</small>
+      </div>
+
+      <!-- Enhanced Product Information Fields -->
+      <div style="border: 1px solid #ddd; padding: 15px; margin-bottom: 20px; border-radius: 4px; background-color: #f8f9fa;">
+        <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 1.1em; color: #495057;">Enhanced Product Details</h3>
+        
+        <div class="form-group">
+          <label for="subcategory">Subcategory:</label>
+          <input type="text" id="subcategory" name="subcategory" maxlength="100" placeholder="e.g., Single Malt, Blanco, Orange Liqueur">
+          <small>Specific subcategory or style within the main category.</small>
+        </div>
+
+        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+          <div class="form-group" style="flex: 1; min-width: 200px;">
+            <label for="countryOfOrigin">Country of Origin:</label>
+            <input type="text" id="countryOfOrigin" name="countryOfOrigin" maxlength="100" placeholder="e.g., Scotland, Mexico, Italy">
+            <small>Country where the product is produced.</small>
+          </div>
+          
+          <div class="form-group" style="flex: 1; min-width: 200px;">
+            <label for="abv">ABV (%):</label>
+            <input type="text" id="abv" name="abv" placeholder="e.g., 40.0" inputmode="decimal" pattern="^\d*(\.?\d{1,2})?$" maxlength="6">
+            <small>Alcohol by volume percentage (0-100).</small>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="spiritsType">Spirits Type:</label>
+          <input type="text" id="spiritsType" name="spiritsType" maxlength="100" placeholder="e.g., Single Malt Scotch, 100% Agave Tequila">
+          <small>Detailed classification for spirits (if applicable).</small>
+        </div>
+
+        <div class="form-group">
+          <label for="spiritsStyle">Spirits Style:</label>
+          <input type="text" id="spiritsStyle" name="spiritsStyle" maxlength="100" placeholder="e.g., Islay, Reposado, London Dry">
+          <small>Specific style or regional classification.</small>
+        </div>
+
+        <div class="form-group">
+          <label for="tasteProfile">Taste Profile:</label>
+          <input type="text" id="tasteProfile" name="tasteProfile" maxlength="500" placeholder="e.g., Citrus, Vanilla, Smoky, Balanced">
+          <small>Comma-separated taste descriptors (e.g., Citrus, Vanilla, Smoky, Balanced).</small>
+        </div>
+
+        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+          <div class="form-group" style="flex: 1; min-width: 150px;">
+            <label for="bodyStyle">Body Style:</label>
+            <select id="bodyStyle" name="bodyStyle">
+              <option value="">-- Select --</option>
+              <option value="Light-bodied">Light-bodied</option>
+              <option value="Medium-bodied">Medium-bodied</option>
+              <option value="Full-bodied">Full-bodied</option>
+            </select>
+            <small>Overall body/mouthfeel of the product.</small>
+          </div>
+
+          <div class="form-group" style="flex: 1; min-width: 150px;">
+            <label for="sku">SKU:</label>
+            <input type="text" id="sku" name="sku" maxlength="50" placeholder="e.g., 12345-678">
+            <small>Product SKU or supplier code.</small>
+          </div>
+
+          <div class="form-group" style="flex: 1; min-width: 150px;">
+            <label for="sizeVolume">Size/Volume:</label>
+            <input type="text" id="sizeVolume" name="sizeVolume" maxlength="50" placeholder="e.g., 750ml, 1L">
+            <small>Standard package size description.</small>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="description">Description:</label>
+          <textarea id="description" name="description" maxlength="1000" rows="3" style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 3px;" placeholder="Detailed product description, tasting notes, or additional information..."></textarea>
+          <small>Detailed product description, tasting notes, or additional information.</small>
+        </div>
+
+        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+          <div class="form-group" style="flex: 1; min-width: 200px;">
+            <label for="storageRequirements">Storage Requirements:</label>
+            <select id="storageRequirements" name="storageRequirements">
+              <option value="">-- Select --</option>
+              <option value="Room Temperature">Room Temperature</option>
+              <option value="Cool, Dark Place">Cool, Dark Place</option>
+              <option value="Refrigerate After Opening">Refrigerate After Opening</option>
+              <option value="Refrigerate Always">Refrigerate Always</option>
+              <option value="Freeze">Freeze</option>
+              <option value="Dry Storage">Dry Storage</option>
+            </select>
+            <small>Required storage conditions.</small>
+          </div>
+
+          <div class="form-group" style="flex: 1; min-width: 150px;">
+            <label for="shelfLifeDays">Shelf Life (Days):</label>
+            <input type="text" id="shelfLifeDays" name="shelfLifeDays" placeholder="e.g., 365" inputmode="numeric" pattern="^\d+$" maxlength="5">
+            <small>Shelf life in days (whole numbers only).</small>
+          </div>
+
+          <div class="form-group" style="flex: 1; min-width: 150px;">
+            <label for="supplierID">Supplier ID:</label>
+            <input type="text" id="supplierID" name="supplierID" maxlength="20" placeholder="e.g., SUP001">
+            <small>Internal supplier reference ID.</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="minQuantity">Minimum Quantity per Service:</label>
+        <input type="text" id="minQuantity" name="minQuantity" maxlength="50" placeholder="e.g., 1 oz, 2 dashes, 1 slice">
+        <small>Minimum quantity advisable per service instance (e.g., "1 oz", "2 dashes", "1 garnish").</small>
+      </div>
+
+      <!-- Unit Size / Metric -->
+      <div style="display: flex; gap: 20px; flex-wrap: wrap; border: 1px solid #eee; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
+          <div class="form-group" style="flex: 2; min-width: 250px; margin-bottom: 0;">
+            <label>Unit Size (Purchase Size):</label>
+            <div class="unit-size-group">
+              <div class="unit-size-options">
+                <!-- Common sizes -->
+                <div><label class="unit-size-option"><input type="radio" name="unitSize" value="750"> 750</label></div>
+                <div><label class="unit-size-option"><input type="radio" name="unitSize" value="1000"> 1000 (1L)</label></div> <!-- Added 1L -->
+                <div><label class="unit-size-option"><input type="radio" name="unitSize" value="1750"> 1750 (1.75L)</label></div> <!-- Added 1.75L -->
+                <div><label class="unit-size-option"><input type="radio" name="unitSize" value="1"> 1</label></div>
+                <div><label class="unit-size-option"><input type="radio" name="unitSize" value="4"> 4</label></div>
+                <div><label class="unit-size-option"><input type="radio" name="unitSize" value="5"> 5</label></div> <!-- Added 5 -->
+                <div><label class="unit-size-option"><input type="radio" name="unitSize" value="8"> 8</label></div>
+                <div><label class="unit-size-option"><input type="radio" name="unitSize" value="16"> 16</label></div>
+                <div><label class="unit-size-option"><input type="radio" name="unitSize" value="32"> 32</label></div>
+                <div><label class="unit-size-option"><input type="radio" name="unitSize" value="64"> 64</label></div>
+                <div><label class="unit-size-option"><input type="radio" name="unitSize" value="128"> 128</label></div>
+              </div>
+              <div class="unit-size-other">
+                <label for="unitSizeOther">Other:</label>
+                <input type="text" id="unitSizeOther" name="unitSizeOther" placeholder="Enter size" maxlength="20" inputmode="decimal">
+                <input type="radio" name="unitSize" value="" id="unitSizeRadioOther" style="display: none;">
+              </div>
+            </div>
+            <small>Size of the typical purchased bottle/container.</small>
+          </div>
+
+          <div class="form-group" style="flex: 1; min-width: 150px; margin-bottom: 0;">
+            <label for="unitMetric">Unit Metric:</label>
+            <select id="unitMetric" name="unitMetric" required>
+              <option value="">-- Select --</option>
+              <option value="ml">ml</option>
+              <option value="L">L</option>
+              <option value="oz">oz</option>
+              <option value="fl oz">fl oz</option>
+              <option value="gal">gal</option> <!-- Added gal -->
+              <option value="lb">lb</option>
+              <option value="kg">kg</option> <!-- Added kg -->
+              <option value="gram">gram</option>
+              <option value="each">each</option>
+              <option value="bunch">bunch</option> <!-- Added bunch -->
+              <option value="case">case</option> <!-- Added case -->
+              <option value="N/A">N/A</option> <!-- Added N/A -->
+            </select>
+            <small>Metric for the unit size.</small>
+          </div>
+      </div>
+
+
+      <div class="form-group">
+        <label for="costPerUnit">Cost per Unit (USD):</label>
+        <input type="text" id="costPerUnit" name="costPerUnit" placeholder="e.g., 12.99" inputmode="decimal" pattern="^\d*(\.\d{0,2})?$" maxlength="10">
+        <small>Cost for the Unit Size specified above. Numbers/decimal only. Exclude sales tax.</small>
+      </div>
+
+      <div class="form-group">
+        <label for="source">Source:</label>
+        <input type="text" id="source" name="source" placeholder="e.g., BevMo, Restaurant Depot, Local Farm" maxlength="150">
+        <small>Where the item is typically purchased.</small>
+      </div>
+
+      <!-- Allergen, Substitute, Storage, Shelf Life -->
+       <div style="border: 1px solid #eee; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
+          <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 1.1em;">Additional Information</h3>
+          <div class="form-group">
+            <label for="allergen">Allergens:</label>
+            <input type="text" id="allergen" name="allergen" maxlength="255" placeholder="e.g., nuts, dairy, gluten">
+            <small>Specify known allergens. Separate multiple with commas.</small>
+          </div>
+          <div class="form-group">
+            <label for="substitute">Substitute Ingredients:</label>
+            <input type="text" id="substitute" name="substitute" maxlength="255" placeholder="e.g., Agave Nectar, Other Brand Name">
+            <small>Suggest substitute ingredients. Separate multiple with commas.</small>
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="legacyNotes">Legacy Notes:</label>
+            <input type="text" id="legacyNotes" name="legacyNotes" maxlength="255" placeholder="Additional notes or legacy information">
+            <small>Any additional notes or legacy information not captured in the enhanced fields above.</small>
+          </div>
+       </div>
+
+      <!-- Flags/Checkboxes -->
+      <div style="border: 1px solid #eee; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
+         <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 1.1em;">Flags</h3>
+         <div class="checkbox-group">
+           <input type="checkbox" id="alcoholic" name="alcoholic" value="true">
+           <label for="alcoholic">Alcoholic</label>
+           <small>Check if it's an alcoholic item.</small>
+         </div>
+         <div class="checkbox-group">
+           <input type="checkbox" id="bulk" name="bulk" value="true">
+           <label for="bulk">Stored in Bulk</label>
+           <small>Check if it's an item typically stored in large quantities (beyond single serving bottles).</small>
+         </div>
+         <!-- *** NEW CHECKBOX *** -->
+         <div class="checkbox-group">
+           <input type="checkbox" id="isAvailable175L" name="isAvailable175L" value="true">
+           <label for="isAvailable175L">Available in 1.75L Size</label>
+           <small>Check if this ingredient is commonly available for purchase in a 1.75L bottle.</small>
+         </div>
+          <!-- *** END NEW CHECKBOX *** -->
+      </div>
+
+
+      <!-- Form Action Buttons -->
+      <div class="form-buttons">
+        <button type="button" onclick="clearForm()">Clear Form</button>
+        <button type="button" onclick="submitForm()" id="submitButton">Add Ingredient</button> <!-- Changed type to button, onclick handles submit -->
+      </div>
+
+    </form>
+
+    <!-- Modals (Waiting, Duplicate) -->
+    <div id="waiting-modal">
+      <div class="modal-content">
+        <div class="loader"></div>
+        <p>Please wait, processing ingredient...</p>
+      </div>
+    </div>
+
+    <div id="duplicate-modal">
+      <div class="duplicate-modal-content">
+        <h2><span style="color: #ffc107;">!</span> Ingredient Already Exists</h2>
+        <p>An ingredient with the name "<strong id="duplicate-ingredient-name"></strong>" already exists. Review the details and choose an action.</p>
+
+        <div style="display: flex; gap: 20px;">
+            <div class="comparison-section" style="flex: 1;">
+              <h3>Existing Ingredient Data</h3>
+              <div id="existing-data-display"></div>
+            </div>
+            <div class="comparison-section" style="flex: 1;">
+              <h3>New Data (You Entered)</h3>
+              <div id="new-data-display"></div>
+            </div>
+        </div>
+
+        <div class="modal-buttons">
+          <button onclick="keepExistingIngredient()">Keep Existing & Clear Form</button>
+          <button onclick="replaceIngredient()" id="replaceButton">Replace Existing with New Data</button>
+          <button onclick="closeDuplicateModal()">Cancel</button>
+        </div>
+      </div>
+    </div> <!-- End Duplicate Modal -->
+
+  </div> <!-- End Container -->
+
+  <script>
+    let currentFormData = null;
+    let existingIngredientDataForReplace = null;
+
+    /**
+     * Gathers form data, performs client-side validation, and sends data to server.
+     */
+    function submitForm() {
+      const form = document.getElementById('ingredient-form');
+      clearMessages(); // Clear previous messages
+
+      // Basic HTML5 validation
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+
+      const formData = {};
+
+      // Collect standard fields
+      formData.ingredientName = form.ingredientName.value.trim();
+      formData.category = form.category.value;
+      formData.labelBrand = form.labelBrand.value.trim();
+      formData.minQuantity = form.minQuantity.value.trim();
+
+      // Handle Unit Size (Radio or Other)
+      let unitSizeValue = document.querySelector('input[name="unitSize"]:checked')?.value;
+      const unitSizeOtherValue = form.unitSizeOther.value.trim();
+      if (unitSizeOtherValue) {
+        // Validate 'Other' unit size is numeric if entered
+        if (isNaN(parseFloat(unitSizeOtherValue)) || !isFinite(unitSizeOtherValue)) {
+            displayError("Invalid input for 'Other' Unit Size. Please enter a number.");
+            form.unitSizeOther.focus();
+            return;
+        }
+        unitSizeValue = unitSizeOtherValue; // Use 'Other' value
+         // Ensure the hidden radio is checked and has the value (though checking focus is usually enough)
+         document.getElementById('unitSizeRadioOther').value = unitSizeOtherValue;
+         document.getElementById('unitSizeRadioOther').checked = true;
+      } else if (!unitSizeValue && form.category.value !== 'Produce' && form.category.value !== 'Decorative' && form.unitMetric.value !== 'each' && form.unitMetric.value !== 'N/A' && form.unitMetric.value !== 'bunch') {
+          // Require unit size unless it's Produce/Decorative/Each/NA/Bunch (where size might be irrelevant)
+          displayError("Please select or enter a Unit Size.");
+          // Find the first radio button to focus
+           const firstRadio = document.querySelector('input[name="unitSize"]');
+           if (firstRadio) firstRadio.focus();
+          return;
+      }
+      formData.unitSize = unitSizeValue; // Assign the determined value
+
+      formData.unitMetric = form.unitMetric.value;
+
+      // Validate and collect Cost per Unit
+      const costPerUnitValue = form.costPerUnit.value.trim();
+      if (costPerUnitValue && !/^\d*(\.\d{1,2})?$/.test(costPerUnitValue)) {
+          displayError("Invalid format for Cost per Unit. Use numbers and up to two decimal places (e.g., 12.99).");
+          form.costPerUnit.focus();
+          return;
+      }
+      formData.costPerUnit = costPerUnitValue;
+
+      formData.source = form.source.value.trim();
+      formData.allergen = form.allergen.value.trim();
+      formData.substitute = form.substitute.value.trim();
+      formData.storage = form.storage.value.trim();
+      formData.shelfLife = form.shelfLife.value.trim();
+
+      // Collect checkbox values
+      formData.alcoholic = form.alcoholic.checked;
+      formData.bulk = form.bulk.checked;
+      formData.isAvailable175L = form.isAvailable175L.checked; // *** ADD New Checkbox Value ***
+
+      console.log("Form Data:", formData);
+      currentFormData = formData; // Store current data for potential replacement
+
+      // Show waiting modal and disable submit button
+      showWaitingModal("Saving ingredient...");
+      document.getElementById('submitButton').disabled = true;
+
+      // Call server-side function
+      google.script.run
+        .withSuccessHandler(handleServerResponse)
+        .withFailureHandler(handleServerError)
+        .saveIngredientData(formData); // Pass the updated formData
+    }
+
+    /**
+     * Handles server response, checking for success or duplicate.
+     */
+    function handleServerResponse(serverResponse) {
+      hideWaitingModal();
+      document.getElementById('submitButton').disabled = false;
+
+      console.log("Raw Server Response:", serverResponse);
+      let parsedResponse = null;
+
+      // Attempt to parse if looks like JSON
+      if (typeof serverResponse === 'string' && (serverResponse.trim().startsWith('{') || serverResponse.trim().startsWith('['))) {
+          try {
+              parsedResponse = JSON.parse(serverResponse);
+              console.log("Parsed JSON Response:", parsedResponse);
+          } catch (e) {
+              console.error("Error parsing server response JSON:", e);
+              parsedResponse = null;
+               handleServerError({ message: "Received an improperly formatted response from the server." }); // Use error handler
+               return;
+          }
+      } else {
+           console.log("Server response is not JSON, treating as message.");
+      }
+
+      // Check if duplicate object was returned
+      if (parsedResponse !== null && typeof parsedResponse === 'object' && parsedResponse.hasOwnProperty('rowIndex')) {
+        console.log("Duplicate Ingredient Detected");
+        displayDuplicateModal(parsedResponse, currentFormData);
+      }
+      // Check if simple success string was returned
+      else if (typeof serverResponse === 'string' && serverResponse.toLowerCase().includes("success")) {
+         console.log("Success - Ingredient Added/Replaced");
+         displaySuccess(serverResponse); // Display success message
+      }
+      // Handle other string responses as potential errors
+      else if (typeof serverResponse === 'string') {
+           console.warn("Unexpected string server response:", serverResponse);
+           handleServerError({ message: serverResponse }); // Use error handler
+      }
+      // Handle other unexpected formats
+      else {
+        console.error("Unexpected server response format:", serverResponse);
+        handleServerError({ message: "An unexpected response was received from the server." });
+      }
+    }
+
+    /**
+     * Handles errors from server execution.
+     */
+     function handleServerError(error) {
+        console.error("Server Execution Error:", error);
+        hideWaitingModal();
+        document.getElementById('submitButton').disabled = false;
+        let message = "An error occurred while saving the ingredient.";
+        if (error && error.message) {
+            message = error.message.replace(/^Exception: /, '').replace(/^Error: /, '');
+        }
+        displayError(message); // Display error in the designated div
+    }
+
+    /**
+     * Displays the duplicate ingredient comparison modal.
+     */
+    function displayDuplicateModal(existingData, newData) {
+      existingIngredientDataForReplace = existingData; // Store existing data including rowIndex
+      document.getElementById('duplicate-ingredient-name').textContent = newData.ingredientName;
+
+      const existingDataDisplay = document.getElementById('existing-data-display');
+      const newDataDisplay = document.getElementById('new-data-display');
+      existingDataDisplay.innerHTML = '';
+      newDataDisplay.innerHTML = '';
+
+      // *** UPDATE dataFields ARRAY TO INCLUDE isAvailable175L ***
+      const dataFields = [
+        "ingredientName", "category", "labelBrand", "minQuantity",
+        "unitSize", "unitMetric", "costPerUnit", "source",
+        "alcoholic", "bulk", "isAvailable175L", // Added new field
+        "allergen", "substitute", "storage", "shelfLife"
+      ];
+
+      dataFields.forEach(field => {
+          let existingValue = existingData && existingData.hasOwnProperty(field) ? existingData[field] : '';
+          let newValue = newData && newData.hasOwnProperty(field) ? newData[field] : '';
+
+          // Format booleans nicely for display
+          if (typeof existingValue === 'boolean') {
+              existingValue = existingValue ? 'Yes' : 'No';
+          }
+          if (typeof newValue === 'boolean') {
+              newValue = newValue ? 'Yes' : 'No';
+          }
+
+          // Use 'N/A' for empty/null/undefined values in display
+          existingValue = (existingValue === null || typeof existingValue === 'undefined' || existingValue === '') ? 'N/A' : existingValue;
+          newValue = (newValue === null || typeof newValue === 'undefined' || newValue === '') ? 'N/A' : newValue;
+
+          existingDataDisplay.innerHTML += `<div class="data-row"><div class="data-label">${field}:</div><div class="data-value">${existingValue}</div></div>`;
+          newDataDisplay.innerHTML += `<div class="data-row"><div class="data-label">${field}:</div><div class="data-value">${newValue}</div></div>`;
+      });
+
+      document.getElementById('duplicate-modal').style.display = "block";
+    }
+
+    /** Closes the duplicate modal */
+    function closeDuplicateModal() {
+      document.getElementById('duplicate-modal').style.display = "none";
+      // Ensure buttons are re-enabled
+      document.getElementById('replaceButton').disabled = false;
+      document.querySelectorAll('#duplicate-modal .modal-buttons button').forEach(button => button.disabled = false);
+    }
+
+    /** Action for 'Keep Existing' button */
+    function keepExistingIngredient() {
+      closeDuplicateModal();
+      clearForm(); // Clear the user's entered data
+       displayInfoMessage("Kept existing ingredient. Form cleared."); // Optional feedback
+    }
+
+    /** Action for 'Replace' button */
+    function replaceIngredient() {
+       if (!existingIngredientDataForReplace || !existingIngredientDataForReplace.rowIndex) {
+            console.error("Cannot replace ingredient: Missing data.");
+            displayError("Error: Could not identify the ingredient to replace.");
+            closeDuplicateModal();
+            return;
+        }
+
+      showWaitingModal("Replacing ingredient...");
+      document.getElementById('replaceButton').disabled = true;
+      document.querySelectorAll('#duplicate-modal .modal-buttons button').forEach(button => button.disabled = true);
+
+      const rowIndexToReplace = existingIngredientDataForReplace.rowIndex;
+
+      google.script.run
+        .withSuccessHandler(function(serverResponse) {
+          hideWaitingModal();
+          closeDuplicateModal();
+          displaySuccess(serverResponse);
+        })
+        .withFailureHandler(function(error) {
+           hideWaitingModal();
+           closeDuplicateModal(); // Close modal even on failure
+           handleServerError(error); // Display error using standard handler
+        })
+        .saveIngredientData(currentFormData, rowIndexToReplace); // Pass data and row index
+    }
+
+    /** Clears the form and messages */
+    function clearForm() {
+      document.getElementById('ingredient-form').reset();
+      // Ensure "Other" radio button logic is reset
+      document.getElementById('unitSizeOther').value = '';
+      document.getElementById('unitSizeRadioOther').checked = false;
+      clearMessages();
+       window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to top
+    }
+
+    /** Clears success/error messages */
+    function clearMessages() {
+      const successDiv = document.getElementById('success-message');
+      const errorDiv = document.getElementById('error-message');
+      if (successDiv) successDiv.style.display = 'none';
+      if (errorDiv) errorDiv.style.display = 'none';
+    }
+
+    /** Displays success message and clears form */
+    function displaySuccess(serverResponse) {
+      // Try sending message to parent window (if in iframe)
+      try {
+        if (window.parent && window.parent !== window) {
+            console.log("Ingredient Iframe: Sending postMessage 'ingredientAdded'");
+            window.parent.postMessage('ingredientAdded', '*'); // Origin should be restricted in production
+        }
+      } catch (e) {
+        console.error("Error sending 'ingredientAdded' postMessage:", e);
+      }
+
+      const message = (typeof serverResponse === 'string') ? serverResponse : "Operation successful!";
+      const div = document.getElementById('success-message');
+      if (div) {
+        div.textContent = message;
+        div.style.display = 'block';
+        div.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Hide message after a delay and clear form
+        setTimeout(() => {
+            if (div) div.style.display = 'none';
+            clearForm();
+        }, 3000); // Clear form after message is shown
+      } else {
+        alert(message); // Fallback
+        clearForm(); // Clear form even if using alert
+      }
+    }
+
+     /** Displays error message */
+    function displayError(message) {
+       console.error("Client-side Display Error:", message);
+        const div = document.getElementById('error-message');
+        if (div) {
+            div.textContent = message || "An unknown error occurred.";
+            div.style.display = 'block';
+            div.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+            alert("Error: " + message); // Fallback
+        }
+    }
+
+     /** Shows the 'Please wait' modal */
+    function showWaitingModal(message = "Processing...") {
+        document.getElementById('waiting-modal').style.display = "block";
+    }
+
+    /** Hides the 'Please wait' modal */
+    function hideWaitingModal() {
+        document.getElementById('waiting-modal').style.display = "none";
+    }
+
+
+    // --- Event Listeners for Unit Size 'Other' Input ---
+    const unitSizeOtherInput = document.getElementById('unitSizeOther');
+    const unitSizeRadioOther = document.getElementById('unitSizeRadioOther');
+    const unitSizeRadioButtons = document.querySelectorAll('input[name="unitSize"]:not(#unitSizeRadioOther)');
+
+    // Select 'Other' radio when the text input gets focus
+    unitSizeOtherInput.addEventListener('focus', function() {
+      unitSizeRadioOther.checked = true;
+      // Don't automatically uncheck others on focus, only on input/change
+    });
+
+    // Also select 'Other' radio when user starts typing in the text input
+    unitSizeOtherInput.addEventListener('input', function() {
+        if (this.value.trim() !== '') {
+             unitSizeRadioOther.checked = true;
+             // Uncheck standard radios when typing in 'Other'
+             unitSizeRadioButtons.forEach(radio => radio.checked = false);
+        }
+    });
+
+    // Clear 'Other' input when a standard radio button is selected
+    unitSizeRadioButtons.forEach(radio => {
+      radio.addEventListener('change', function() {
+        if (this.checked) {
+          unitSizeOtherInput.value = ''; // Clear the text input
+          unitSizeRadioOther.checked = false; // Ensure 'Other' radio is unchecked
+        }
+      });
+    });
+
+     // --- Iframe Communication (Optional) ---
+     window.addEventListener('load', function() {
+       try {
+           const actualOrigin = window.location.origin;
+           console.log("Ingredient Iframe: Actual origin after load:", actualOrigin);
+           if (window.parent && window.parent !== window) {
+              window.parent.postMessage({ type: 'iframeOrigin', origin: actualOrigin }, '*'); // Restrict origin in production
+           }
+       } catch (e) {
+           console.error("Error sending iframe origin postMessage:", e);
+       }
+     });
+
+  </script>
+</body>
+</html>

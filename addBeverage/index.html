@@ -1,0 +1,2007 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <base target="_top">
+    <title>Add Beverage</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        /* --- Base Styles --- */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+            color: #333;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1140px;
+            margin: 20px auto;
+            padding: 0;
+            box-sizing: border-box;
+            position: relative;
+            display: flex;
+            flex-direction: row;
+            gap: 30px;
+        }
+        .form-section {
+            flex: 2;
+            padding: 25px;
+            box-sizing: border-box;
+            background-color: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .summary-section {
+            flex: 1;
+            padding: 20px;
+            box-sizing: border-box;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            position: sticky;
+            top: 20px;
+            height: fit-content; /* Adjust height based on content */
+            max-height: calc(100vh - 40px); /* Max height with padding */
+            overflow-y: auto; /* Add scroll if content overflows */
+            align-self: flex-start;
+            font-size: 0.95em;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+
+        /* --- Form Element Styles --- */
+        .form-group {
+            margin-bottom: 25px;
+        }
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+        .form-group small {
+            font-size: 0.8em;
+            color: #6c757d;
+            display: block;
+            margin-top: 6px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+        }
+        input[type="text"],
+        textarea,
+        select,
+        input[type="number"] {
+            width: 100%;
+            padding: 10px 12px;
+            box-sizing: border-box;
+            margin-bottom: 5px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 1em;
+            background-color: #fff;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        input[type="text"]:focus,
+        textarea:focus,
+        select:focus,
+        input[type="number"]:focus {
+            border-color: #80bdff;
+            outline: 0;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+        select {
+            appearance: none; /* Use custom arrow */
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 16px 12px;
+            padding-right: 2.5rem;
+        }
+        textarea {
+            height: 120px;
+            resize: vertical;
+        }
+
+        /* --- Ingredient Group Styles --- */
+        .ingredient-group {
+            border: 1px solid #e9ecef;
+            padding: 20px;
+            margin-bottom: 15px;
+            position: relative;
+            background-color: #fff;
+            border-radius: 6px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+        }
+        .ingredient-group label {
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+        .ingredient-group select.ingredient-name {
+            margin-bottom: 15px;
+        }
+        .ingredient-group .measurement-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+        .ingredient-group .measurement-row > div {
+            flex: 1;
+        }
+        .ingredient-group select.measurement-size,
+        .ingredient-group select.measurement-unit {
+            width: 100%;
+            display: block;
+            margin-bottom: 0;
+        }
+        .ingredient-container {
+            margin-bottom: 10px;
+        }
+
+        /* --- Buttons --- */
+        button {
+            padding: 10px 18px;
+            cursor: pointer;
+            border-radius: 5px;
+            border: 1px solid transparent;
+            font-size: 0.95em;
+            font-weight: 500;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+            line-height: 1.5;
+        }
+        button:disabled {
+            cursor: not-allowed;
+            opacity: 0.65;
+        }
+        button[type="submit"],
+        .modal-buttons button[onclick*="replace"],
+        .modal-buttons button[onclick*="addAsNew"] {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        button[type="submit"]:hover,
+        .modal-buttons button[onclick*="replace"]:hover,
+        .modal-buttons button[onclick*="addAsNew"]:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+        button[type="button"]:not(#add-ingredient-btn):not(#add-new-ingredient-btn):not(#refresh-ingredients-btn):not(.modal-buttons button) { /* Default button style */
+            background-color: #6c757d;
+            color: white;
+            border-color: #6c757d;
+        }
+        button[type="button"]:not(#add-ingredient-btn):not(#add-new-ingredient-btn):not(#refresh-ingredients-btn):not(.modal-buttons button):hover {
+            background-color: #5a6268;
+            border-color: #5a6268;
+        }
+        .modal-buttons-success button {
+            background-color: #28a745;
+            border-color: #28a745;
+            color: white;
+        }
+        .modal-buttons-success button:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+        }
+        #add-ingredient-btn,
+        #add-new-ingredient-btn {
+            background-color: #28a745;
+            border-color: #28a745;
+            color: white;
+        }
+        #add-ingredient-btn:hover,
+        #add-new-ingredient-btn:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+        }
+        #refresh-ingredients-btn {
+            background-color: #17a2b8;
+            border-color: #17a2b8;
+            color: white;
+        }
+        #refresh-ingredients-btn:hover {
+            background-color: #138496;
+            border-color: #117a8b;
+        }
+        #close-iframe-button,
+        #close-standards-button,
+        .remove-ingredient-btn {
+            background-color: #dc3545;
+            border-color: #dc3545;
+            color: white;
+        }
+        #close-iframe-button:hover,
+        #close-standards-button:hover,
+        .remove-ingredient-btn:hover {
+            background-color: #c82333;
+            border-color: #bd2130;
+        }
+        .remove-ingredient-btn {
+            padding: 3px 8px;
+            font-size: 14px;
+            line-height: 1.2;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        .modal-buttons button {
+            margin: 0 8px;
+        }
+        .modal-buttons button[onclick*="keepExisting"],
+        .modal-buttons button[onclick*="closeDuplicate"] {
+            background-color: #6c757d;
+            border-color: #6c757d;
+        }
+        .form-buttons {
+            margin-top: 30px;
+            text-align: right;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+        .form-buttons button {
+            margin-left: 10px;
+        }
+        .ingredient-controls {
+            margin-top: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        /* Button Loading State */
+        .button-loading .spinner {
+            display: inline-block;
+            width: 1em;
+            height: 1em;
+            vertical-align: -0.125em;
+            border: .2em solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: spinner-border .75s linear infinite;
+            margin-right: .5em;
+        }
+        @keyframes spinner-border { to { transform: rotate(360deg); } }
+
+        /* --- Messages --- */
+        #success-message,
+        #error-message {
+            display: none;
+            padding: 12px 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border: 1px solid transparent;
+        }
+        #success-message {
+            background-color: #d4edda;
+            color: #155724;
+            border-color: #c3e6cb;
+        }
+        #error-message {
+            background-color: #f8d7da;
+            color: #721c24;
+            border-color: #f5c6cb;
+        }
+
+        /* --- Modals --- */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1050;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: #fff;
+            margin: 10% auto;
+            padding: 25px 30px;
+            border: 1px solid rgba(0,0,0,.2);
+            width: 90%;
+            max-width: 550px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,.5);
+            position: relative;
+        }
+        .modal-close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            line-height: 1;
+            color: #000;
+            text-shadow: 0 1px 0 #fff;
+            opacity: .5;
+            background: transparent;
+            border: 0;
+            cursor: pointer;
+            padding: 0;
+        }
+        .modal-close-btn:hover {
+            opacity: .75;
+        }
+        .loader {
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #007bff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1.2s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .modal-buttons {
+            text-align: center;
+            margin-top: 25px;
+        }
+        .modal-buttons-success {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        /* Duplicate Modal Specifics */
+        #duplicate-modal .modal-content {
+            max-width: 950px;
+            text-align: left;
+        }
+        #duplicate-modal h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #555;
+            font-weight: 600;
+        }
+        .comparison-section {
+            margin-bottom: 20px;
+            border: 1px solid #eee;
+            padding: 20px;
+            border-radius: 6px;
+            background-color: #fdfdfd;
+        }
+        .comparison-section h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+            font-size: 1.1em;
+            color: #333;
+            font-weight: 600;
+        }
+        .comparison-flex {
+            display: flex;
+            gap: 25px;
+        }
+        .comparison-flex > div {
+            flex: 1;
+        }
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 5px 0;
+            border-bottom: 1px dotted #eee;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+        .data-row:last-child {
+            border-bottom: none;
+        }
+        .data-label {
+            font-weight: 600;
+            width: 38%; /* Adjust width as needed */
+            text-align: right;
+            padding-right: 15px;
+            color: #555;
+            flex-shrink: 0;
+            word-break: break-word; /* Prevent long labels from pushing value */
+        }
+        .data-value {
+            width: 62%; /* Adjust width as needed */
+            white-space: normal; /* Allow wrapping */
+            word-break: break-word; /* Break long words */
+            color: #212529;
+            text-align: left;
+        }
+
+        /* Ingredient Iframe Modal */
+        #ingredient-iframe-modal .modal-content { /* Override for iframe modal */
+            margin: 3% auto;
+            width: 95%;
+            max-width: 1000px;
+            height: 90vh;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* Prevent double scrollbars */
+        }
+        .ingredient-iframe-header {
+            padding: 10px 15px;
+            background-color: #f7f7f7;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: flex-end;
+            flex-shrink: 0; /* Prevent header from shrinking */
+        }
+        #ingredient-iframe-body {
+            flex-grow: 1; /* Allow body to fill space */
+            overflow: auto; /* Allow scrolling *within* the iframe body */
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+        }
+        #ingredient-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block; /* Remove potential extra space below iframe */
+        }
+        #close-iframe-button {
+            font-size: 0.9em;
+            padding: 8px 12px;
+        }
+
+        /* Recipe Standards Modal */
+        #recipe-standards-modal .modal-content {
+            max-width: 750px;
+            text-align: left;
+        }
+        #recipe-standards-modal h2 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        #recipe-standards-modal pre {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 0.9em;
+            max-height: 40vh; /* Limit height and allow scrolling */
+            overflow-y: auto;
+            border: 1px solid #ced4da;
+        }
+        #recipe-standards-modal ul {
+            margin-top: 15px;
+            padding-left: 20px;
+            font-size: 0.9em;
+        }
+
+        /* Ingredient Summary Styles */
+        .summary-section h3 {
+            margin-top: 0;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            color: #333;
+            font-weight: 600;
+        }
+        #ingredient-summary-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0 0 25px 0; /* Add bottom margin before menu section */
+        }
+        #ingredient-summary-list li {
+            margin-bottom: 8px;
+            padding: 4px 0;
+            border-bottom: 1px dotted #eee;
+            font-size: 0.95em;
+            word-break: break-word; /* Prevent long summary lines */
+        }
+        #ingredient-summary-list li:last-child {
+            border-bottom: none;
+        }
+        #ingredient-summary-list li.placeholder {
+            font-style: italic;
+            color: #888;
+            border-bottom: none;
+        }
+
+        /* --- Menu Preview Styles (NEW) --- */
+        #menu-controls-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #ccc;
+        }
+        #menu-controls-section h4 {
+            margin-top: 0;
+            margin-bottom: 5px; /* Reduced margin */
+            font-size: 1.1em;
+            color: #333;
+            font-weight: 600;
+        }
+         #menu-controls-section small { /* Style the small text */
+            font-size: 0.8em;
+            color: #6c757d;
+            display: block;
+            margin-bottom: 10px;
+        }
+        #menu-ingredient-checklist {
+            margin-bottom: 15px;
+            max-height: 200px; /* Limit height and allow scrolling if many ingredients */
+            overflow-y: auto;
+            padding-right: 5px; /* Space for scrollbar, reduced slightly */
+            border: 1px solid #eee; /* Add subtle border */
+            padding: 10px; /* Add padding inside */
+            background-color: #fff; /* White background for contrast */
+            border-radius: 4px;
+        }
+        #menu-ingredient-checklist .menu-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        #menu-ingredient-checklist input[type="checkbox"] {
+            width: auto; /* Override default width */
+            margin-right: 10px; /* Increased spacing */
+            flex-shrink: 0;
+            transform: scale(1.1); /* Slightly larger checkbox */
+            cursor: pointer;
+        }
+        #menu-ingredient-checklist label {
+             margin-bottom: 0; /* Override default label margin */
+             font-weight: normal;
+             font-size: 0.95em;
+             color: #333;
+             cursor: pointer;
+             word-break: break-word; /* Prevent long names overflowing */
+             flex-grow: 1; /* Allow label to take available space */
+        }
+        #menu-ingredient-checklist .placeholder { /* Style placeholder inside checklist */
+            font-style: italic;
+            color: #6c757d;
+            padding: 5px 0;
+        }
+        #menu-preview-display-container {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            border: 1px solid #ced4da;
+            font-size: 0.9em;
+        }
+        #menu-preview-display-container label {
+            font-weight: 600;
+            font-size: 0.9em;
+            color: #495057;
+            margin-bottom: 5px;
+            display: block;
+        }
+         #menu-preview-display {
+            color: #212529;
+            min-height: 1.2em; /* Ensure space even when empty */
+            word-wrap: break-word; /* Wrap long previews */
+            line-height: 1.5;
+         }
+        #menu-preview-display.placeholder {
+            color: #6c757d;
+            font-style: italic;
+        }
+        /* --- End Menu Preview Styles --- */
+
+        /* --- Mobile / Responsive Styles --- */
+        @media (max-width: 992px) { /* Stacks below large screens */
+            .container {
+                flex-direction: column;
+                gap: 20px;
+            }
+            .form-section {
+                padding: 20px;
+            }
+            .summary-section {
+                width: 100%;
+                position: static; /* Unstick summary */
+                margin-top: 0; /* Remove top margin when stacked */
+                max-height: none; /* Remove max-height when stacked */
+                overflow-y: visible; /* Remove scroll when stacked */
+                box-shadow: none;
+            }
+            /* Removed summary toggle rules as it's hidden */
+            .comparison-flex {
+                flex-direction: column; /* Stack comparison sections */
+            }
+        }
+        @media (max-width: 576px) { /* Small screens */
+            body {
+                padding: 10px;
+            }
+            .modal-content,
+            #duplicate-modal .modal-content,
+            #recipe-standards-modal .modal-content {
+                width: 95%;
+                margin: 5% auto; /* Reduce top margin */
+                padding: 20px;
+            }
+            #ingredient-iframe-modal .modal-content {
+                width: 98%;
+                margin: 2% auto;
+                height: 95vh;
+            }
+            .form-buttons button { /* Stack buttons */
+                width: 100%;
+                margin-left: 0;
+                margin-bottom: 10px;
+            }
+            .form-buttons button:last-child {
+                margin-bottom: 0;
+            }
+             .ingredient-controls { /* Stack ingredient buttons */
+                flex-direction: column;
+                align-items: stretch;
+             }
+             .ingredient-controls button {
+                 width: 100%;
+             }
+             .data-label {
+                 width: 30%; /* Adjust for smaller screens if needed */
+             }
+             .data-value {
+                  width: 70%;
+             }
+        }
+
+        /* Keep summary toggle hidden */
+        #toggle-summary-button {
+            display: none;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="form-section"> <!-- Form Section Container -->
+            <h1>Add New Beverage</h1>
+            <p>Enter the ingredients and recipe for a single serving of the beverage.</p>
+
+            <!-- Messages Area -->
+            <div id="success-message" style="display: none;"></div>
+            <div id="error-message" style="display: none;"></div> <!-- Start hidden -->
+
+            <!-- Beverage Form -->
+            <form id="beverage-form" onsubmit="submitForm(event)">
+
+                <!-- Basic Info -->
+                <div class="form-group">
+                    <label for="beverageName">Beverage Name:</label>
+                    <input type="text" id="beverageName" name="beverageName" placeholder="e.g., Margarita, Old Fashioned" required maxlength="150">
+                    <small>Unique name for the beverage.</small>
+                </div>
+                <div class="form-group">
+                    <label for="beverageType">Beverage Type:</label>
+                    <select id="beverageType" name="beverageType" required>
+                        <option value="">-- Select Type --</option>
+                        <option value="Cocktail">Cocktail</option>
+                        <option value="Zero-Proof Cocktail">Zero-Proof Cocktail</option>
+                        <option value="Mocktail">Mocktail</option>
+                        <option value="Mixed Drink">Mixed Drink (Simple 2-3 ingredients)</option>
+                        <option value="Beer">Beer (Served as is)</option>
+                        <option value="Wine">Wine (Served as is)</option>
+                        <option value="Spirit Pour">Spirit Pour (Neat/Rocks)</option>
+                        <option value="Batch Cocktail">Batch Cocktail</option>
+                        <option value="Batch Zero-Proof Cocktail">Batch Zero-Proof Cocktail</option>
+                        <option value="Batch Mocktail">Batch Mocktail</option>
+                        <option value="Other Beverage">Other Beverage (e.g., Soda, Juice)</option>
+                    </select>
+                    <small>Classify the primary type of beverage.</small>
+                </div>
+                <div class="form-group">
+                    <label for="buildMethod">Build Method:</label>
+                    <select id="buildMethod" name="buildMethod" required>
+                        <option value="">-- Select Method --</option>
+                        <option value="Built In Glass">Built In Glass</option>
+                        <option value="Shaken">Shaken</option>
+                        <option value="Stirred">Stirred</option>
+                        <option value="Blended">Blended</option>
+                        <option value="Served Neat/As Is">Served Neat/As Is (for Beer/Wine/Spirit)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="baseSpirit">Base Spirit:</label>
+                    <select id="baseSpirit" name="baseSpirit">
+                        <option value="">-- Select Base Spirit (Optional) --</option>
+                        <? if (baseSpirits && baseSpirits.length > 0) { ?>
+                            <?!= baseSpirits.map(spirit => `<option value="${spirit}">${spirit}</option>`).join('') ?>
+                        <? } else { ?>
+                            <option value="" disabled>No spirits found</option>
+                        <? } ?>
+                    </select>
+                    <small>Select the primary spirit (if applicable). Populated from ingredients marked with category 'Spirit'.</small>
+                </div>
+
+                <!-- Ingredients Section -->
+                <div class="form-group">
+                    <label style="margin-bottom: 15px;">Ingredients:</label>
+                    <!-- Toggle button removed -->
+                    <div id="ingredient-container">
+                        <!-- Initial ingredient group -->
+                        <div class="ingredient-group" id="ingredient-group-1">
+                            <label for="ingredientName1">Ingredient Name:</label>
+                            <select class="ingredient-name" id="ingredientName1" name="ingredientName1" required onchange="updateIngredientSummary()">
+                                <option value="">-- Select Ingredient --</option>
+                                <? if (ingredientNames && ingredientNames.length > 0) { ?>
+                                    <?!= ingredientNames.map(name => `<option value="${name}">${name}</option>`).join('') ?>
+                                <? } else { ?>
+                                    <option value="" disabled>No ingredients found</option>
+                                <? } ?>
+                            </select>
+                            <label for="preferredLabel1">Preferred Label/Type:</label>
+                            <input type="text" id="preferredLabel1" name="preferredLabel1" placeholder="e.g., Top Shelf Tequila, Fresh Squeezed" oninput="updateIngredientSummary()" maxlength="100">
+                            <div class="measurement-row">
+                                <div>
+                                    <label for="measurementSize1">Size:</label>
+                                    <select class="measurement-size" id="measurementSize1" name="measurementSize1" required onchange="updateIngredientSummary()">
+                                        <option value="">-- Size --</option>
+                                        <!-- Sizes populated by JS on DOMContentLoaded -->
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="measurementUnit1">Unit:</label>
+                                    <select class="measurement-unit" id="measurementUnit1" name="measurementUnit1" required onchange="updateIngredientSummary()">
+                                        <option value="">-- Unit --</option>
+                                        <option value="oz">oz</option><option value="fl oz">fl oz</option><option value="ml">ml</option>
+                                        <option value="tspn">tspn</option><option value="tbsp">tbsp</option><option value="cup">cup</option>
+                                        <option value="dash">dash</option><option value="splash">splash</option><option value="gram">gram</option>
+                                        <option value="each">each</option><option value="garnish">garnish</option><option value="to taste">to taste</option>
+                                        <option value="top">top</option><option value="rinse">rinse</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <input type="hidden" id="isFirst1" name="isFirst1" value="true">
+                        </div><!-- End Initial Ingredient Group -->
+                    </div><!-- End Ingredient Container -->
+                    <!-- Ingredient Controls -->
+                    <div class="ingredient-controls">
+                        <button type="button" id="add-ingredient-btn">Add Ingredient Row</button>
+                        <button type="button" id="add-new-ingredient-btn">Add New Ingredient to DB</button>
+                        <button type="button" id="refresh-ingredients-btn" title="Reload ingredient list from database">
+                           <span class="button-text">Refresh Ingredient List</span>
+                           <span class="button-loading" style="display: none;"><span class="spinner"></span> Loading...</span>
+                        </button>
+                    </div>
+                </div><!-- End Ingredients Form Group -->
+
+                <!-- Instructions & Serving -->
+                <div class="form-group">
+                    <label for="buildInstructions">Build Instructions:</label> <!-- Changed ID/name to match JS/Server -->
+                    <textarea id="buildInstructions" name="buildInstructions" required maxlength="2000" placeholder="Enter detailed build instructions..."></textarea>
+                    <small>Follow standard recipe format. <a href="#" id="recipe-standards-link" onclick="openStandardsModal(event); return false;" style="color: #007bff; text-decoration: none; font-weight: 500;">View Standards</a>.</small>
+                </div>
+                <div class="form-group">
+                    <label for="glasswareType">Glassware Type:</label>
+                    <select id="glasswareType" name="glasswareType" required>
+                        <option value="">-- Select --</option>
+                        <option value="rocks">Rocks</option><option value="highball">Highball</option><option value="collins">Collins</option>
+                        <option value="coupe">Coupe</option><option value="cocktail">Cocktail</option><option value="martini">Martini</option>
+                        <option value="margarita">Margarita</option><option value="flute">Flute</option><option value="wine">Wine</option>
+                        <option value="tiki">Tiki</option><option value="mug">Mug</option><option value="shot">Shot</option>
+                        <option value="other">Other</option><option value="none">None (Served directly)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="iceType">Ice Type:</label>
+                    <select id="iceType" name="iceType" required>
+                        <option value="">-- Select --</option>
+                        <option value="cube">Cube</option> <option value="large_cube">Large Cube/Sphere</option>
+                        <option value="pebble">Pebble</option> <option value="crushed">Crushed</option> <option value="none">None</option>
+                    </select>
+                    <small>Select 'None' if served neat, up, or no ice required.</small>
+                </div>
+                <div class="form-group">
+                    <label for="popularityRating">Popularity Rating:</label>
+                    <select id="popularityRating" name="popularityRating" required>
+                        <option value="">-- Select Rating --</option>
+                        <option value="1">1</option> <option value="2">2</option> <option value="3">3</option> <option value="4">4</option>
+                        <option value="5">5 (Average)</option> <option value="6">6</option> <option value="7">7</option> <option value="8">8</option>
+                        <option value="9">9</option> <option value="10">10 (Most Popular)</option>
+                    </select>
+                    <small>1 (least popular) to 10 (most popular).</small>
+                </div>
+                <div class="form-group">
+                    <label for="costPerServing">Cost per Serving (USD):</label>
+                    <input type="text" id="costPerServing" name="costPerServing" placeholder="e.g., 3.50" inputmode="decimal" pattern="^\d*(\.\d{1,2})?$" maxlength="10">
+                    <small>Manual entry for estimated cost. Future versions may calculate this.</small>
+                </div>
+
+                <!-- NEW: Hidden input for the menu ingredient string -->
+                <input type="hidden" id="menuIngredientStringInput" name="menuIngredientString">
+
+                <!-- Form Action Buttons -->
+                <div class="form-buttons">
+                    <button type="button" onclick="clearForm()">Clear Form</button>
+                    <button type="submit" id="submitButton">Add Beverage</button>
+                </div>
+            </form><!-- End Beverage Form -->
+
+        </div> <!-- End Form Section -->
+
+        <!-- Summary Section -->
+        <div class="summary-section"> <!-- Removed visible-summary class, default visible -->
+            <h3>Ingredient Summary</h3>
+            <ul id="ingredient-summary-list">
+                <!-- Populated by JS -->
+                <li class="placeholder">No complete ingredients entered yet.</li>
+            </ul>
+
+            <!-- NEW: Menu Preview Section -->
+            <div id="menu-controls-section">
+                <h4>Menu Ingredient Selector</h4>
+                <small>Select ingredients to include in the simplified menu listing.</small>
+                <div id="menu-ingredient-checklist">
+                    <!-- Checkboxes populated by JS -->
+                    <p class="placeholder">Add ingredients to build the menu preview.</p>
+                </div>
+                <div id="menu-preview-display-container">
+                     <label for="menu-preview-display">Menu Preview:</label>
+                     <div id="menu-preview-display" class="placeholder">Nothing selected</div>
+                </div>
+            </div>
+            <!-- End Menu Preview Section -->
+
+        </div> <!-- End Summary Section -->
+
+        <!-- Modals -->
+        <div id="waiting-modal" class="modal">
+             <div class="modal-content">
+                <div class="loader"></div>
+                <p id="waiting-message" style="font-weight: 500;">Please wait...</p>
+            </div>
+        </div>
+
+        <div id="success-modal" class="modal">
+            <div class="modal-content">
+                <h3 style="color: #155724; margin-top: 0;">Success!</h3>
+                <p id="success-modal-message" style="margin-bottom: 25px;"></p>
+                <div class="modal-buttons-success">
+                    <button onclick="closeSuccessModal()">OK</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="duplicate-modal" class="modal">
+            <div class="modal-content">
+                 <button type="button" class="modal-close-btn" onclick="closeDuplicateModal()" aria-label="Close">×</button>
+                <h2><span style="color: #ffc107; font-size: 1.2em; vertical-align: middle; margin-right: 5px;">⚠️</span> Beverage Already Exists</h2>
+                <p>A beverage with the name "<strong id="duplicate-beverage-name"></strong>" already exists. Review the details below and decide how to proceed.</p>
+                <div class="comparison-flex">
+                    <div class="comparison-section">
+                        <h3>Existing Data</h3>
+                        <div id="existing-data-display"> <!-- Populated by JS --> </div>
+                    </div>
+                    <div class="comparison-section">
+                        <h3>New Data (You Entered)</h3>
+                        <div id="new-data-display"> <!-- Populated by JS --> </div>
+                    </div>
+                </div>
+                <div class="modal-buttons">
+                    <button onclick="keepExistingBeverage()">Keep Existing</button>
+                    <button onclick="replaceBeverage()" id="replaceButton">Replace with New</button>
+                    <button onclick="addAsNewBeverage()" id="addNewButton">Add as New Version</button>
+                    <button onclick="closeDuplicateModal()" style="background-color: #6c757d;">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="ingredient-iframe-modal" class="modal">
+             <div class="modal-content"> <!-- Adjusted via CSS for iframe -->
+                <div class="ingredient-iframe-header">
+                    <button id="close-iframe-button" onclick="closeIngredientIframeModal()">Close & Refresh List</button>
+                </div>
+                <div id="ingredient-iframe-body">
+                    <iframe id="ingredient-iframe" src="about:blank" title="Add New Ingredient"></iframe>
+                </div>
+            </div>
+        </div>
+
+        <div id="recipe-standards-modal" class="modal">
+            <div class="modal-content">
+                <button type="button" class="modal-close-btn" onclick="closeStandardsModal()" aria-label="Close">×</button>
+                <h2>Recipe Standards Guide</h2>
+                <p>Follow this general format for clarity and consistency:</p>
+                <pre><code>
+                Example: Margarita
+                Rim rocks glass with salt; set aside
+                In a shaker tin, add:
+                - 1 1/2 oz Tequila Blanco
+                - 1/2 oz Orange Liqueur (e.g., Cointreau)
+                - 1/2 oz Simple Syrup
+                - 1 oz Lime Juice (Fresh Squeezed)
+                Add ice and shake
+                Strain into the prepared rocks glass with fresh ice
+                Garnish dehydrated lime wheel
+                </code></pre>
+                <p><strong>Tips:</strong></p>
+                <ul>
+                    <li>Start with glass preparation if applicable.</li>
+                    <li>List ingredients clearly with measurements. Specify type/brand if important.</li>
+                    <li>Describe the build action (shake, stir, build).</li>
+                    <li>Specify straining method if relevant.</li>
+                    <li>Mention fresh ice if used in the serving glass.</li>
+                    <li>End with the garnish.</li>
+                </ul>
+                 <div class="modal-buttons" style="margin-top: 15px; text-align: right;">
+                    <button id="close-standards-button" onclick="closeStandardsModal()">Close</button>
+                </div>
+            </div>
+        </div>
+        <!-- End Modals -->
+
+    </div> <!-- End Container -->
+
+
+    <script>
+        // --- Global Variables ---
+        let currentFormData = null;
+        let existingBeverageDataForReplace = null;
+        // Safely stringify data passed from server, provide fallback array
+        let ingredientNames = <? try { ?>
+            <?!= JSON.stringify(ingredientNames || []) ?>
+        <? } catch(e) { ?>
+            []
+        <? } ?>;
+        let baseSpirits = <? try { ?>
+            <?!= JSON.stringify(baseSpirits || []) ?>
+        <? } catch(e) { ?>
+            []
+        <? } ?>;
+        let ingredientWebAppURL = 'https://script.google.com/a/macros/young.events/s/AKfycbzGOeQlvAfhEHJvGJFaaM6aW-eae9bVHf-Bb4IUwXR_yn3c4OCBAl-VSdZO6sJd0UVQow/exec'; // *** REPLACE WITH YOUR URL ***
+        let ingredientCounter = 1; // Tracks the number of ingredient groups added
+        const measurementSizes = generateMeasurementSizes(); // Generate size options on load
+        
+        // Debug the template variables
+        console.log('Template variables loaded:');
+        console.log('ingredientNames:', ingredientNames, 'Type:', typeof ingredientNames, 'IsArray:', Array.isArray(ingredientNames));
+        console.log('baseSpirits:', baseSpirits, 'Type:', typeof baseSpirits, 'IsArray:', Array.isArray(baseSpirits));
+
+        // --- Core Form Functions ---
+
+        /**
+         * Handles form submission, performs validation, gathers data, and calls server function.
+         */
+        function submitForm(event) {
+            event.preventDefault();
+            const form = document.getElementById('beverage-form');
+            clearMessages(); // Clear previous messages first
+
+            // Use HTML5 validation first
+            if (!form.checkValidity()) {
+                form.reportValidity(); // Show native validation errors
+                // Find first invalid field and focus it (optional enhancement)
+                const firstInvalid = form.querySelector(':invalid');
+                firstInvalid?.focus();
+                return;
+            }
+
+            // Gather form data
+            const formData = {};
+            formData.beverageName = form.beverageName.value.trim();
+            formData.beverageType = form.beverageType.value;
+            formData.buildMethod = form.buildMethod.value;
+            formData.baseSpirit = form.baseSpirit.value;
+            // Use the correct name/id for build instructions textarea
+            formData.buildInstructions = form.buildInstructions.value.trim();
+            formData.glasswareType = form.glasswareType.value;
+            formData.iceType = form.iceType.value;
+            formData.popularityRating = form.popularityRating.value;
+            const costPerServingValue = form.costPerServing.value.trim();
+
+            // Client-side validation for cost format
+            if (costPerServingValue && !/^\d*(\.\d{1,2})?$/.test(costPerServingValue)) {
+                displayError("Invalid format for Cost per Serving (e.g., 3.50). Please use numbers only, up to two decimal places.");
+                form.costPerServing.focus();
+                return;
+            }
+            formData.costPerServing = costPerServingValue;
+
+             // Get the menu ingredient string from the hidden input
+            formData.menuIngredientString = document.getElementById('menuIngredientStringInput').value;
+
+            // Collect dynamic ingredients
+            let hasIngredients = false;
+            let firstIncompleteIngredientGroup = null;
+            document.querySelectorAll('.ingredient-group').forEach((group) => {
+                const groupIndex = group.id.split('-').pop(); // Get index from ID like 'ingredient-group-2'
+                const nameEl = group.querySelector(`.ingredient-name`);
+                const sizeEl = group.querySelector(`.measurement-size`);
+                const unitEl = group.querySelector(`.measurement-unit`);
+                const labelEl = group.querySelector(`input[name^="preferredLabel"]`);
+
+                const name = nameEl?.value;
+                const size = sizeEl?.value;
+                const unit = unitEl?.value;
+
+                // Add to formData ONLY if all required fields (name, size, unit) are present
+                if (name && size && unit) {
+                    formData[`ingredient${groupIndex}Name`] = name;
+                    formData[`ingredient${groupIndex}MeasurementSize`] = size;
+                    formData[`ingredient${groupIndex}MeasurementUnit`] = unit;
+                    formData[`ingredient${groupIndex}PreferredLabel`] = labelEl?.value.trim() || '';
+                    hasIngredients = true;
+                } else if (name || size || unit) {
+                    // If any part is filled but not all required, mark as incomplete
+                    console.warn(`Incomplete ingredient row (index ${groupIndex}) skipped. Name: ${name}, Size: ${size}, Unit: ${unit}`);
+                    if (!firstIncompleteIngredientGroup) {
+                        firstIncompleteIngredientGroup = group; // Track the first incomplete group for focusing
+                    }
+                }
+                // If all fields are empty, we just ignore the row silently
+            });
+
+            // Final check: Must have at least one COMPLETE ingredient row
+            if (!hasIngredients) {
+                displayError("Please add at least one complete ingredient (Name, Size, and Unit required).");
+                 // Focus the first required field in the relevant group
+                const focusTarget = firstIncompleteIngredientGroup
+                                    ? (firstIncompleteIngredientGroup.querySelector(':invalid') || firstIncompleteIngredientGroup.querySelector('select, input'))
+                                    : document.getElementById('ingredientName1');
+                focusTarget?.focus();
+                return;
+            }
+
+            // If there were incomplete rows BUT at least one complete row, allow submission but maybe show a warning?
+            if (firstIncompleteIngredientGroup && hasIngredients) {
+                 console.warn("Submitting form with some incomplete ingredient rows skipped.");
+                 // Optionally display a non-blocking message:
+                 // displayInfoMessage("Note: Some incomplete ingredient rows were ignored.");
+            }
+
+            // Store data and call server
+            currentFormData = formData; // Store potentially filtered data
+            console.log("Sending Data:", JSON.stringify(currentFormData)); // Log exactly what's being sent
+            showWaitingModal("Saving beverage...");
+            document.getElementById('submitButton').disabled = true;
+            google.script.run
+                .withSuccessHandler(handleServerResponse)
+                .withFailureHandler(handleServerError)
+                .saveBeverageData(currentFormData, 'add'); // Send the potentially filtered formData
+        }
+
+        /** Handles successful server response */
+        function handleServerResponse(serverResponse) {
+            hideWaitingModal();
+            document.getElementById('submitButton').disabled = false;
+            console.log("Raw Response:", serverResponse);
+            let parsedResponse = null;
+
+            // Try to parse if it looks like JSON (duplicate response is JSON)
+            if (typeof serverResponse === 'string' && serverResponse.trim().startsWith('{') /* && serverResponse.trim().endsWith('}') */ ) {
+                try {
+                    parsedResponse = JSON.parse(serverResponse);
+                } catch (e) {
+                    console.error("JSON Parse Error:", e);
+                    // If parsing fails, treat it as a potential success message or error string
+                     if (serverResponse.toLowerCase().includes("success")) {
+                        console.log("Operation successful (parsed as string).");
+                        displaySuccessModal(serverResponse);
+                    } else {
+                        handleServerError({ message: "Received an improperly formatted JSON-like response from the server: " + serverResponse });
+                    }
+                    return;
+                }
+            }
+
+            // Handle different response types
+            if (parsedResponse && parsedResponse.rowIndex && parsedResponse.beverageName) { // More robust check for duplicate object
+                console.log("Duplicate detected.");
+                displayDuplicateModal(parsedResponse, currentFormData); // Pass current form data for comparison
+            } else if (typeof serverResponse === 'string' && serverResponse.toLowerCase().includes("success")) {
+                console.log("Operation successful.");
+                displaySuccessModal(serverResponse); // Show success modal for string responses
+            } else if (typeof serverResponse === 'string') {
+                 // Assume any other string is an error or unexpected message
+                console.warn("Received non-success string response (treating as error):", serverResponse);
+                handleServerError({ message: serverResponse });
+            } else {
+                console.error("Unexpected server response format:", serverResponse);
+                handleServerError({ message: "An unexpected or non-string response was received from the server." });
+            }
+        }
+
+        /** Handles server execution errors */
+        function handleServerError(error) {
+            console.error("Server Error Object:", error);
+            hideWaitingModal();
+            document.getElementById('submitButton').disabled = false;
+            // Extract user-friendly message if possible
+            // Google Apps Script often wraps errors in a message property
+            let message = "An unknown server error occurred.";
+            if (error && typeof error === 'object' && error.message) {
+                 message = error.message;
+            } else if (typeof error === 'string') {
+                 message = error;
+            }
+            // Remove boilerplate error prefixes for cleaner display
+            message = message.replace(/^Exception: /, '').replace(/^Error: /, '');
+            displayError(`Server Error: ${message}`);
+        }
+
+        /** Displays duplicate comparison modal */
+        function displayDuplicateModal(existingData, newDataFromForm) {
+            existingBeverageDataForReplace = existingData; // Store existing data for potential replace action
+            currentFormData = newDataFromForm; // Ensure currentFormData is set for replace/add new actions
+
+            document.getElementById('duplicate-beverage-name').textContent = newDataFromForm.beverageName;
+            const existingDisp = document.getElementById('existing-data-display');
+            const newDisp = document.getElementById('new-data-display');
+            existingDisp.innerHTML = ''; // Clear previous comparison
+            newDisp.innerHTML = ''; // Clear previous comparison
+
+            // Define fields to display - Ensure these match keys in existingData (camelCase) and newDataFromForm
+            // Use the camelCase keys expected from checkBeverageExists and the keys used in submitForm()
+            const fieldsToDisplay = [
+                { key: "beverageName", label: "Beverage Name" },
+                { key: "beverageType", label: "Beverage Type" },
+                { key: "buildMethod", label: "Build Method" },
+                { key: "baseSpirit", label: "Base Spirit" },
+                { key: "ingredients", label: "Ingredients (Full)", format: formatIng }, // Special formatting needed
+                { key: "menuIngredientString", label: "Menu Ingredients" },
+                { key: "buildInstructions", label: "Build Instructions" },
+                { key: "glasswareType", label: "Glassware" },
+                { key: "iceType", label: "Ice Type" },
+                { key: "popularityRating", label: "Popularity" },
+                { key: "costPerServing", label: "Cost/Serving" }
+            ];
+
+            // Helper to format ingredients JSON for display
+            function formatIng(data, isNewDataFormat) {
+                 let ingredientsArray = [];
+                 if (isNewDataFormat) { // Data is the newDataFromForm object from the current form submission
+                     let i = 1;
+                     // Loop through potential ingredient keys based on the current form structure
+                     while(data[`ingredient${i}Name`]) {
+                         if(data[`ingredient${i}Name`] && data[`ingredient${i}MeasurementSize`] && data[`ingredient${i}MeasurementUnit`]) {
+                             ingredientsArray.push({
+                                 name: data[`ingredient${i}Name`],
+                                 measurementSize: data[`ingredient${i}MeasurementSize`],
+                                 measurementUnit: data[`ingredient${i}MeasurementUnit`],
+                                 preferredLabel: data[`ingredient${i}PreferredLabel`]
+                             });
+                         }
+                         i++;
+                     }
+                 } else { // Data is likely a JSON string from the existing spreadsheet record
+                     try {
+                         // Ensure data is a string before parsing
+                         ingredientsArray = JSON.parse(String(data || '[]'));
+                         if (!Array.isArray(ingredientsArray)) ingredientsArray = []; // Handle cases where parse result isn't array
+                     } catch(e) {
+                         console.warn("Failed to parse existing ingredients JSON for display:", e, "Data was:", data);
+                         return escapeHtml(String(data || 'Error parsing')) + ' (Raw)'; // Show raw data on error
+                     }
+                 }
+
+                 if (!ingredientsArray || ingredientsArray.length === 0) return 'None';
+
+                 // Map array to display string using the MeasurementSize Lookup
+                 return ingredientsArray.map(ing => {
+                     // Find the display text for the size value (works for both formats)
+                     let sizeValue = ing.measurementSize || ing.size; // Handle potential key difference if needed
+                     let sizeText = measurementSizes.find(s => s.value == sizeValue)?.text || sizeValue || '?';
+                     let unitValue = ing.measurementUnit || ing.unit;
+                     let labelValue = ing.preferredLabel || ing.label;
+                     // Construct display string
+                     return escapeHtml(`${ing.name || '?'} (${sizeText} ${unitValue || '?'})${labelValue ? ` [${labelValue}]` : ''}`);
+                 }).join('<br>'); // Use <br> for line breaks in HTML display
+            };
+
+             // Helper to safely escape HTML content
+             const escapeHtml = (unsafe) => {
+                 if (typeof unsafe !== 'string') {
+                     // Convert null/undefined to 'N/A', other types to string
+                     return (unsafe === null || unsafe === undefined) ? 'N/A' : String(unsafe);
+                 }
+                 return unsafe
+                      .replace(/&/g, '&amp;')
+                      .replace(/</g, '&lt;')
+                      .replace(/>/g, '&gt;')
+                      .replace(/"/g, '&quot;')
+                      .replace(/'/g, '&apos;');
+             }
+
+            // Populate fields in the modal
+            fieldsToDisplay.forEach(fieldInfo => {
+                let existVal = existingData?.[fieldInfo.key]; // Use camelCase key from existingData
+                let newVal = newDataFromForm?.[fieldInfo.key]; // Use key from current form data
+
+                // Apply formatting function if specified
+                if (fieldInfo.format) {
+                    existVal = fieldInfo.format(existVal, false); // Format existing (likely JSON string)
+                    newVal = fieldInfo.format(newDataFromForm, true); // Format new (pass entire form data object)
+                }
+
+                // Escape *after* formatting, ensure 'N/A' for empty/null/undefined
+                let existHtml = (existVal === null || existVal === undefined || existVal === '') ? 'N/A' : escapeHtml(String(existVal));
+                let newHtml = (newVal === null || newVal === undefined || newVal === '') ? 'N/A' : escapeHtml(String(newVal));
+
+                // Add row to respective display areas (handle potential <br> from ingredient formatting)
+                existingDisp.innerHTML += `<div class="data-row"><div class="data-label">${escapeHtml(fieldInfo.label)}:</div><div class="data-value">${existHtml}</div></div>`;
+                newDisp.innerHTML += `<div class="data-row"><div class="data-label">${escapeHtml(fieldInfo.label)}:</div><div class="data-value">${newHtml}</div></div>`;
+            });
+            document.getElementById('duplicate-modal').style.display = "block";
+        }
+
+
+        /** Closes duplicate modal */
+        function closeDuplicateModal() {
+            document.getElementById('duplicate-modal').style.display = "none";
+            // Re-enable modal buttons that might have been disabled
+            document.querySelectorAll('#duplicate-modal .modal-buttons button').forEach(b => b.disabled = false);
+            // Clear stored data references
+            existingBeverageDataForReplace = null;
+            // currentFormData remains as it was before modal
+        }
+
+        /** Action for 'Keep Existing' */
+        function keepExistingBeverage() {
+            closeDuplicateModal(); // Close the modal first
+            clearForm(); // Clear the user's entered data
+            displayInfoMessage("Kept the existing beverage. Form cleared.");
+        }
+
+        /** Action for 'Replace' */
+        function replaceBeverage() {
+            if (!existingBeverageDataForReplace?.rowIndex || !currentFormData) {
+                displayError("Error: Cannot replace. Missing existing data reference or current form data.");
+                closeDuplicateModal();
+                return;
+            }
+            // Disable buttons in duplicate modal immediately
+            document.querySelectorAll('#duplicate-modal .modal-buttons button').forEach(b => b.disabled = true);
+            showWaitingModal("Replacing beverage...");
+
+            google.script.run
+                .withSuccessHandler(r => {
+                    hideWaitingModal();
+                    closeDuplicateModal(); // Close modal on success *before* showing success message
+                    displaySuccessModal(r); // Display success (which then clears form)
+                })
+                .withFailureHandler(e => {
+                    hideWaitingModal();
+                    // Don't close duplicate modal on failure, allow user to try again or cancel
+                    handleServerError(e);
+                    // Re-enable buttons on failure to allow retry/cancel
+                    document.querySelectorAll('#duplicate-modal .modal-buttons button').forEach(b => b.disabled = false);
+                })
+                .saveBeverageData(currentFormData, 'replace', existingBeverageDataForReplace.rowIndex);
+        }
+
+        /** Action for 'Add as New Version' */
+        function addAsNewBeverage() {
+             if (!currentFormData) {
+                displayError("Error: Cannot add as new. Missing current form data.");
+                closeDuplicateModal();
+                return;
+            }
+            // Disable buttons in duplicate modal immediately
+            document.querySelectorAll('#duplicate-modal .modal-buttons button').forEach(b => b.disabled = true);
+            showWaitingModal("Adding as new version...");
+
+            google.script.run
+                .withSuccessHandler(r => {
+                    hideWaitingModal();
+                    closeDuplicateModal(); // Close modal on success *before* showing success message
+                    displaySuccessModal(r); // Display success (which then clears form)
+                })
+                .withFailureHandler(e => {
+                    hideWaitingModal();
+                     // Don't close duplicate modal on failure, allow user to try again or cancel
+                    handleServerError(e);
+                    // Re-enable buttons on failure to allow retry/cancel
+                    document.querySelectorAll('#duplicate-modal .modal-buttons button').forEach(b => b.disabled = false);
+                })
+                .saveBeverageData(currentFormData, 'add_new'); // Note: No row index needed for add_new
+        }
+
+        /** Clears form fields and resets dynamic elements */
+        function clearForm() {
+            const form = document.getElementById('beverage-form');
+            form.reset(); // Resets most standard form elements
+
+            // Explicitly clear dynamic/complex fields
+            document.getElementById('beverageType').value = '';
+            document.getElementById('buildMethod').value = '';
+            document.getElementById('baseSpirit').value = '';
+            document.getElementById('glasswareType').value = '';
+            document.getElementById('iceType').value = '';
+            document.getElementById('popularityRating').value = '';
+            // Clear any displayed messages
+            clearMessages();
+            // Reset ingredient groups to a single, empty group and update summaries
+            resetFormToOneIngredient();
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            // Clear stored data from potential duplicate check
+            currentFormData = null;
+            existingBeverageDataForReplace = null;
+            console.log("Form Cleared.");
+        }
+
+        /** Clears success/error messages */
+        function clearMessages() {
+            ['success-message', 'error-message'].forEach(id => {
+                const el = document.getElementById(id);
+                if(el) {
+                    el.textContent = ''; // Clear text content
+                    el.style.display = 'none'; // Hide the element
+                 }
+            });
+        }
+
+        /** Displays error message */
+        function displayError(message) {
+            const el = document.getElementById('error-message');
+            if(el) {
+                el.textContent = message || "An unknown error occurred.";
+                el.style.display = 'block';
+                // Scroll to the message for visibility
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                alert("Error: " + message); // Fallback if element somehow missing
+            }
+        }
+
+        /** Displays temporary info message (uses success styling) */
+        function displayInfoMessage(message) {
+            const el = document.getElementById('success-message'); // Reuse success div for info
+            if(el) {
+                el.textContent = message;
+                // Apply a less alarming style than error, but distinct from success? Or just use success style.
+                el.style.backgroundColor = '#d1ecf1'; // Light blue info style
+                el.style.color = '#0c5460';
+                el.style.borderColor = '#bee5eb';
+                el.style.display = 'block';
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Auto-hide after a few seconds
+                setTimeout(() => {
+                    if (el.textContent === message) { // Only hide if the message hasn't changed
+                         el.style.display = 'none';
+                         el.textContent = '';
+                         // Reset style if needed, though clearing text/hiding is usually enough
+                         el.style.backgroundColor = ''; el.style.color = ''; el.style.borderColor = '';
+                    }
+                }, 4000);
+            } else {
+                alert(message); // Fallback
+            }
+        }
+
+        /** Displays success modal */
+        function displaySuccessModal(serverResponse) {
+            const modal = document.getElementById('success-modal');
+            const msgEl = document.getElementById('success-modal-message');
+            if(modal && msgEl){
+                msgEl.textContent = serverResponse || "Operation completed successfully!";
+                modal.style.display = 'block';
+            }
+            // Form clearing is now handled by the 'OK' button in closeSuccessModal
+        }
+
+        /** Closes success modal and clears form */
+        function closeSuccessModal() {
+            document.getElementById('success-modal').style.display = 'none';
+            clearForm(); // Clear the form AFTER user acknowledges success
+        }
+
+        // --- Modal Controls (Generic Show/Hide) ---
+        function showWaitingModal(message = "Processing...") {
+            const el = document.getElementById('waiting-modal');
+            if(el){
+                document.getElementById('waiting-message').textContent = message;
+                el.style.display = "block";
+            }
+        }
+        function hideWaitingModal() {
+            const el = document.getElementById('waiting-modal');
+            if(el) el.style.display = "none";
+        }
+        function openIngredientIframeModal() {
+            const iframe = document.getElementById('ingredient-iframe');
+            const modal = document.getElementById('ingredient-iframe-modal');
+            if (!ingredientWebAppURL || ingredientWebAppURL === 'YOUR_INGREDIENT_WEB_APP_URL_HERE') {
+                displayError("Ingredient App URL not configured in the script.");
+                return;
+            }
+            console.log("Opening ingredient iframe:", ingredientWebAppURL);
+            if (iframe && modal) {
+                iframe.src = 'about:blank'; // Clear first to ensure reload if URL is same
+                // Use setTimeout to ensure the src change is picked up
+                setTimeout(() => {
+                    iframe.src = ingredientWebAppURL;
+                    modal.style.display = "block";
+                }, 50); // Short delay
+            } else {
+                 console.error("Ingredient iframe or modal element not found.");
+            }
+        }
+        // Refined: Close iframe triggers refresh using shared logic
+        function closeIngredientIframeModal() {
+            const modal = document.getElementById('ingredient-iframe-modal');
+            const iframe = document.getElementById('ingredient-iframe');
+            if(modal) modal.style.display = "none";
+            if(iframe) iframe.src = 'about:blank'; // Stop iframe loading/potential background activity
+            console.log("Closed ingredient iframe modal. Triggering ingredient list refresh...");
+            // Trigger the same refresh logic as the button click
+            handleRefreshIngredientsClick();
+        }
+        function openStandardsModal(event) {
+            if(event) event.preventDefault(); // Prevent default link behavior
+            const modal = document.getElementById('recipe-standards-modal');
+            if(modal) modal.style.display = "block";
+        }
+        function closeStandardsModal() {
+            const modal = document.getElementById('recipe-standards-modal');
+            if(modal) modal.style.display = "none";
+        }
+
+        // --- Dynamic Ingredient Handling ---
+        function generateMeasurementSizes() {
+            // Defined possible measurement sizes and their display text/values
+            const sizes = [
+                { text: "dash", value: "dash" }, { text: "splash", value: "splash" },
+                { text: "rinse", value: "rinse" }, { text: "top", value: "top" },
+                { text: "1/16", value: "0.0625" }, { text: "1/8", value: "0.125" },
+                { text: "1/4", value: "0.25" }, { text: "1/3", value: "0.333" },
+                { text: "3/8", value: "0.375" }, { text: "1/2", value: "0.5" },
+                { text: "2/3", value: "0.667" }, { text: "3/4", value: "0.75" },
+                { text: "7/8", value: "0.875" }, { text: "1", value: "1" },
+                { text: "1 1/4", value: "1.25" }, { text: "1 1/2", value: "1.5" },
+                { text: "1 3/4", value: "1.75" }, { text: "2", value: "2" },
+                { text: "2 1/4", value: "2.25" }, { text: "2 1/2", value: "2.5" },
+                { text: "2 3/4", value: "2.75" }, { text: "3", value: "3" },
+                { text: "3 1/4", value: "3.25" }, { text: "3 1/2", value: "3.5" },
+                { text: "3 3/4", value: "3.75" }, { text: "4", value: "4" },
+                { text: "5", value: "5" }, { text: "6", value: "6" },
+                // Add more integer values if needed
+                { text: "7", value: "7" }, { text: "8", value: "8" }
+             ];
+            return sizes;
+        }
+        function addOption(selectElement, text, value) {
+            if (!selectElement) return;
+            const option = document.createElement('option');
+            option.text = text;
+            option.value = value;
+            selectElement.appendChild(option);
+        }
+        /** Populates a select dropdown with ingredient names from the global list */
+        function populateIngredientDropdown(selectElement) {
+            if (!selectElement) return; // Exit if select element is invalid
+            const currentValue = selectElement.value; // Preserve current value attempt
+            selectElement.innerHTML = '<option value="">-- Select Ingredient --</option>'; // Clear existing options
+
+            // Ensure window.ingredientNames is an array before using array methods
+            if (Array.isArray(window.ingredientNames) && window.ingredientNames.length > 0) {
+                window.ingredientNames.forEach(name => addOption(selectElement, name, name)); // Add options
+
+                // Try to restore selection *only if* current value exists and is in the (new) list
+                if (currentValue && window.ingredientNames.includes(currentValue)) {
+                    selectElement.value = currentValue;
+                } else {
+                    selectElement.value = ""; // Reset to default if previous value not found
+                }
+            } else {
+                // Handle the case where ingredientNames is not a valid array or is empty
+                selectElement.innerHTML += '<option value="" disabled>No ingredients available</option>';
+                if (!Array.isArray(window.ingredientNames)) {
+                    console.warn("populateIngredientDropdown: window.ingredientNames is not an array or is undefined.");
+                }
+            }
+        }
+        /** Populates a select dropdown with measurement sizes */
+        function populateSizeDropdown(selectElement) {
+            if (!selectElement) return;
+            const currentValue = selectElement.value; // Preserve selection attempt
+            selectElement.innerHTML = '<option value="">-- Size --</option>'; // Clear
+            measurementSizes.forEach(sizeInfo => addOption(selectElement, sizeInfo.text, sizeInfo.value));
+            // Try to restore selection
+             if (currentValue && measurementSizes.some(s => s.value === currentValue)) {
+                selectElement.value = currentValue;
+            } else {
+                 selectElement.value = "";
+            }
+        }
+
+        /** Adds a new ingredient group row to the form */
+        function handleAddIngredientRow() {
+            ingredientCounter++; // Increment counter for unique IDs
+            const container = document.getElementById('ingredient-container');
+            const newGroup = document.createElement('div');
+            newGroup.className = 'ingredient-group';
+            newGroup.id = `ingredient-group-${ingredientCounter}`; // Use counter for ID
+
+            // HTML structure for the new ingredient group
+            newGroup.innerHTML = `
+                <button type="button" class="remove-ingredient-btn" onclick="removeIngredientGroup(this)" title="Remove Ingredient">×</button>
+                <label for="ingredientName${ingredientCounter}">Ingredient Name:</label>
+                <select class="ingredient-name" id="ingredientName${ingredientCounter}" name="ingredientName${ingredientCounter}" required onchange="updateIngredientSummary()">
+                    <option value="">-- Loading... --</option> <!-- Placeholder -->
+                </select>
+                <label for="preferredLabel${ingredientCounter}">Preferred Label/Type:</label>
+                <input type="text" id="preferredLabel${ingredientCounter}" name="preferredLabel${ingredientCounter}" placeholder="e.g., Specific brand, Fresh" oninput="updateIngredientSummary()" maxlength="100">
+                <div class="measurement-row">
+                    <div>
+                        <label for="measurementSize${ingredientCounter}">Size:</label>
+                        <select class="measurement-size" id="measurementSize${ingredientCounter}" name="measurementSize${ingredientCounter}" required onchange="updateIngredientSummary()">
+                            <option value="">-- Loading... --</option> <!-- Placeholder -->
+                        </select>
+                    </div>
+                    <div>
+                        <label for="measurementUnit${ingredientCounter}">Unit:</label>
+                        <select class="measurement-unit" id="measurementUnit${ingredientCounter}" name="measurementUnit${ingredientCounter}" required onchange="updateIngredientSummary()">
+                            <option value="">-- Unit --</option>
+                            <option value="oz">oz</option><option value="fl oz">fl oz</option><option value="ml">ml</option>
+                            <option value="tspn">tspn</option><option value="tbsp">tbsp</option><option value="cup">cup</option>
+                            <option value="dash">dash</option><option value="splash">splash</option><option value="gram">gram</option>
+                            <option value="each">each</option><option value="garnish">garnish</option><option value="to taste">to taste</option>
+                            <option value="top">top</option><option value="rinse">rinse</option>
+                        </select>
+                    </div>
+                </div>
+              `;
+
+            container.appendChild(newGroup); // Append the new group to the container
+
+            // Find the newly added select elements within the newGroup
+            const newIngredientSelect = newGroup.querySelector(`#ingredientName${ingredientCounter}`);
+            const newSizeSelect = newGroup.querySelector(`#measurementSize${ingredientCounter}`);
+            const newUnitSelect = newGroup.querySelector(`#measurementUnit${ingredientCounter}`); // Needed? Unit list is static for now
+
+            // Populate the dynamic dropdowns
+            if (newIngredientSelect) {
+                populateIngredientDropdown(newIngredientSelect);
+            } else { console.error("Could not find newly added ingredient select element."); }
+            if (newSizeSelect) {
+                populateSizeDropdown(newSizeSelect);
+            } else { console.error("Could not find newly added size select element."); }
+
+            // Attach event listeners to the new group's inputs/selects
+            attachIngredientGroupEventListeners(newGroup);
+            // Update summaries (which also updates menu)
+            updateIngredientSummary();
+            // Focus the new ingredient name dropdown for quick entry
+            newIngredientSelect?.focus();
+        }
+
+        /** Removes an ingredient group (but not the first one) */
+        function removeIngredientGroup(buttonElement) {
+            const groupToRemove = buttonElement.closest('.ingredient-group');
+            if (groupToRemove) {
+                // Prevent removing the very first ingredient group
+                if (groupToRemove.id === 'ingredient-group-1' || document.querySelectorAll('.ingredient-group').length <= 1) {
+                    alert("The first ingredient row cannot be removed. Clear its fields if not needed.");
+                    return;
+                }
+                groupToRemove.remove(); // Remove the group from the DOM
+                // No need to manually decrement ingredientCounter - IDs don't need to be sequential, just unique
+                updateIngredientSummary(); // Update summaries and menu preview
+            }
+        }
+
+        /** Resets ingredient section to just the first group, clearing its fields */
+        function resetFormToOneIngredient() {
+            console.log("Resetting ingredients to first group...");
+            const container = document.getElementById('ingredient-container');
+            const firstGroup = container.querySelector('#ingredient-group-1'); // Target specifically the first group
+
+            // Remove all ingredient groups EXCEPT the first one
+            container.querySelectorAll('.ingredient-group').forEach(group => {
+                if (group.id !== 'ingredient-group-1') {
+                    group.remove();
+                }
+            });
+
+            // Clear the fields within the first group
+            if (firstGroup) {
+                firstGroup.querySelectorAll('select').forEach(select => select.value = ''); // Reset dropdowns
+                firstGroup.querySelectorAll('input[type="text"]').forEach(input => input.value = ''); // Clear text inputs
+                // Ensure the hidden 'isFirst' input exists and is set (though might not be strictly necessary now)
+                const firstInputHidden = firstGroup.querySelector('input[name="isFirst1"]');
+                if (firstInputHidden) firstInputHidden.value = 'true';
+                // Reset required status if needed, though form reset should handle this? Check validity reporting.
+            }
+
+            // Reset the counter (optional, depends if you reuse counter logic elsewhere)
+            ingredientCounter = 1;
+
+            // Update the summary and menu preview to reflect the cleared state
+            updateIngredientSummary();
+        }
+
+        /** Updates the main ingredient summary list AND triggers the menu preview update */
+        function updateIngredientSummary() {
+            const summaryList = document.getElementById('ingredient-summary-list');
+            if (!summaryList) return;
+
+            summaryList.innerHTML = ''; // Clear current summary
+            let hasCompleteItems = false;
+
+            document.querySelectorAll('.ingredient-group').forEach(group => {
+                const nameSelect = group.querySelector('.ingredient-name');
+                const sizeSelect = group.querySelector('.measurement-size');
+                const unitSelect = group.querySelector('.measurement-unit');
+                const labelInput = group.querySelector('input[name^="preferredLabel"]');
+
+                // Only add to summary if all required fields are selected
+                if (nameSelect?.value && sizeSelect?.value && unitSelect?.value) {
+                    // Get the display text for the size, not just the value
+                    let sizeDisplayText = sizeSelect.options[sizeSelect.selectedIndex]?.text || sizeSelect.value;
+                    let summaryText = `${nameSelect.value} - ${sizeDisplayText} ${unitSelect.value}`;
+                    if (labelInput?.value) {
+                        summaryText += ` (${labelInput.value.trim()})`; // Add preferred label if present
+                    }
+                    const listItem = document.createElement('li');
+                    listItem.textContent = summaryText;
+                    summaryList.appendChild(listItem);
+                    hasCompleteItems = true;
+                }
+            });
+
+            // Display placeholder if no complete ingredients are found
+            if (!hasCompleteItems) {
+                const placeholderItem = document.createElement('li');
+                placeholderItem.textContent = 'No complete ingredients entered yet.';
+                placeholderItem.className = 'placeholder'; // Apply placeholder styling
+                summaryList.appendChild(placeholderItem);
+            }
+
+            // *** CRITICAL: Call the menu update function AFTER updating the summary ***
+            updateMenuPreview();
+        }
+
+        /** Attaches event listeners ('input' or 'change') to relevant fields within a specific ingredient group */
+        function attachIngredientGroupEventListeners(ingredientGroup) {
+            if (!ingredientGroup) return;
+            // Listen for changes on selects and text inputs that affect the summary/menu
+            ingredientGroup.querySelectorAll('select.ingredient-name, select.measurement-size, select.measurement-unit, input[name^="preferredLabel"]').forEach(element => {
+                const eventType = (element.tagName === 'INPUT') ? 'input' : 'change';
+                // Use a named function or remove/add to prevent multiple listeners on refresh/add
+                element.removeEventListener(eventType, updateIngredientSummary); // Remove previous listener if any
+                element.addEventListener(eventType, updateIngredientSummary); // Add the listener
+            });
+        }
+
+        // --- NEW: Menu Preview Logic ---
+
+        /**
+         * Updates the checklist of ingredients for the menu preview based on current form state.
+         * Preserves checkbox states where possible.
+         */
+        function updateMenuPreview() {
+            const checklistContainer = document.getElementById('menu-ingredient-checklist');
+            if (!checklistContainer) return;
+
+            // Store the names of currently checked ingredients to maintain state
+            const previouslyCheckedNames = new Set();
+            checklistContainer.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => {
+                previouslyCheckedNames.add(cb.value);
+            });
+
+            checklistContainer.innerHTML = ''; // Clear the current checklist
+            let hasAnyIngredientOptions = false;
+
+            // Iterate through each ingredient group in the form
+            document.querySelectorAll('.ingredient-group').forEach((group, index) => {
+                const nameSelect = group.querySelector('.ingredient-name');
+                const ingredientName = nameSelect?.value; // Get the selected ingredient name
+
+                // Only create a checkbox if an ingredient name IS selected in this group
+                if (ingredientName) {
+                    hasAnyIngredientOptions = true;
+                    const checkboxId = `menu-checkbox-${group.id}`; // Use group ID for uniqueness
+
+                    const menuItemDiv = document.createElement('div');
+                    menuItemDiv.className = 'menu-item';
+
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.id = checkboxId;
+                    checkbox.value = ingredientName; // The value submitted if checked
+
+                    // Determine initial checked state:
+                    // Automatically check new ingredients. If the ingredient name
+                    // was NOT previously checked, then check it now. Otherwise,
+                    // retain the previous checked state.
+                    if (!previouslyCheckedNames.has(ingredientName)) {
+                        checkbox.checked = true; // Check new ingredients
+                    } else {
+                        checkbox.checked = true; // Keep previously checked ingredients checked
+                    }
+
+                    // Add event listener to update the preview string when this checkbox changes
+                    checkbox.addEventListener('change', updateMenuPreviewString);
+
+                    const label = document.createElement('label');
+                    label.htmlFor = checkboxId; // Associate label with checkbox for accessibility/usability
+                    label.textContent = ingredientName; // Display the ingredient name
+
+                    menuItemDiv.appendChild(checkbox);
+                    menuItemDiv.appendChild(label);
+                    checklistContainer.appendChild(menuItemDiv);
+                }
+            });
+
+            // If no ingredient groups have a name selected, show the placeholder text
+            if (!hasAnyIngredientOptions) {
+                checklistContainer.innerHTML = '<p class="placeholder">Add ingredients to build the menu preview.</p>';
+            }
+
+            // IMPORTANT: Update the preview string itself based on the newly generated/updated checklist
+            updateMenuPreviewString();
+        }
+
+        /**
+         * Updates the comma-separated menu preview string displayed to the user
+         * and populates the hidden input field used for form submission.
+         */
+        function updateMenuPreviewString() {
+            const checklistContainer = document.getElementById('menu-ingredient-checklist');
+            const previewDisplay = document.getElementById('menu-preview-display');
+            const hiddenInput = document.getElementById('menuIngredientStringInput');
+
+            if (!checklistContainer || !previewDisplay || !hiddenInput) {
+                console.error("Menu preview elements not found!");
+                return;
+            }
+
+            const selectedIngredients = [];
+            // Find all checkboxes within the container that are currently checked
+            checklistContainer.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
+                selectedIngredients.push(checkbox.value); // Add the ingredient name (value) to the array
+            });
+
+            // Join the selected names with a comma and space
+            const previewString = selectedIngredients.join(', ');
+
+            // Update the visual preview display
+            if (previewString) {
+                previewDisplay.textContent = previewString;
+                previewDisplay.classList.remove('placeholder'); // Remove placeholder style if there's content
+            } else {
+                previewDisplay.textContent = 'Nothing selected'; // Show placeholder text
+                previewDisplay.classList.add('placeholder'); // Apply placeholder style
+            }
+
+            // Update the hidden input field's value - this is what gets submitted
+            hiddenInput.value = previewString;
+            // console.log("Hidden Menu String Updated:", hiddenInput.value); // For debugging
+        }
+
+
+        // --- Ingredient List Refresh Logic ---
+        /** Handles click on the 'Refresh Ingredient List' button */
+        function handleRefreshIngredientsClick() {
+            const refreshButton = document.getElementById('refresh-ingredients-btn');
+            const buttonText = refreshButton?.querySelector('.button-text');
+            const loadingIndicator = refreshButton?.querySelector('.button-loading');
+            if (!refreshButton) return;
+
+            console.log("Refresh ingredients clicked.");
+            clearMessages(); // Clear any existing messages
+            // Disable button and show loading state
+            refreshButton.disabled = true;
+            if(buttonText) buttonText.style.display = 'none';
+            if(loadingIndicator) loadingIndicator.style.display = 'inline-block';
+
+            // Call the server function to get updated ingredient data
+            google.script.run
+                .withSuccessHandler(updateDropdownsUI) // Function to call on success
+                .withFailureHandler(handleRefreshError) // Function to call on failure
+                .getDataForBeverageForm(); // Server function to execute
+        }
+
+        /** Updates ingredient dropdowns UI after successful refresh */
+        function updateDropdownsUI(refreshedData) {
+            const refreshButton = document.getElementById('refresh-ingredients-btn');
+            const buttonText = refreshButton?.querySelector('.button-text');
+            const loadingIndicator = refreshButton?.querySelector('.button-loading');
+
+            console.log("Updating UI with refreshed data:", refreshedData);
+            // Re-enable button and hide loading state
+            if (refreshButton) refreshButton.disabled = false;
+            if(buttonText) buttonText.style.display = 'inline-block';
+            if(loadingIndicator) loadingIndicator.style.display = 'none';
+
+            // Validate the received data
+            if (!refreshedData || !Array.isArray(refreshedData.ingredientNames) || !Array.isArray(refreshedData.baseSpirits)) {
+                displayError("Failed to process refreshed data. Invalid format received.");
+                // Keep existing global lists? Or clear them? Decide based on desired behavior.
+                // window.ingredientNames = []; window.baseSpirits = [];
+                return;
+            }
+
+            // Update global variables holding the lists
+            window.ingredientNames = refreshedData.ingredientNames || [];
+            window.baseSpirits = refreshedData.baseSpirits || [];
+
+            // Store current selections to try and preserve them
+            const currentIngredientSelections = {};
+            document.querySelectorAll('.ingredient-name').forEach(select => {
+                if(select.id && select.value) {
+                    currentIngredientSelections[select.id] = select.value;
+                }
+            });
+            const currentBaseSpirit = document.getElementById('baseSpirit')?.value;
+
+            // Repopulate all ingredient dropdowns
+            document.querySelectorAll('.ingredient-name').forEach(select => {
+                populateIngredientDropdown(select); // Repopulates with new list
+                // Restore selection if the previously selected value still exists in the new list
+                if (select.id && currentIngredientSelections[select.id] && window.ingredientNames.includes(currentIngredientSelections[select.id])) {
+                    select.value = currentIngredientSelections[select.id];
+                } else if (select.id && currentIngredientSelections[select.id]) {
+                    // If previous value is gone, reset to default (handled by populateIngredientDropdown)
+                     select.value = ''; // Explicitly reset if needed
+                    console.log(`Previous selection ${currentIngredientSelections[select.id]} for ${select.id} not found in refreshed list.`);
+                }
+            });
+
+            // Repopulate base spirit dropdown
+            const baseSpiritSelect = document.getElementById('baseSpirit');
+            if(baseSpiritSelect) {
+                populateBaseSpiritDropdown(baseSpiritSelect);
+                // Restore selection if possible
+                if (currentBaseSpirit && window.baseSpirits.includes(currentBaseSpirit)) {
+                    baseSpiritSelect.value = currentBaseSpirit;
+                } else {
+                     baseSpiritSelect.value = ''; // Reset if previous not found
+                }
+            }
+
+            // Update the summary display and menu preview based on potentially changed selections
+            updateIngredientSummary(); // This is crucial!
+            displayInfoMessage("Ingredient list refreshed successfully.");
+        }
+
+        /** Handles errors during ingredient list refresh */
+        function handleRefreshError(error) {
+            const refreshButton = document.getElementById('refresh-ingredients-btn');
+            const buttonText = refreshButton?.querySelector('.button-text');
+            const loadingIndicator = refreshButton?.querySelector('.button-loading');
+            console.error("Refresh Error:", error);
+
+            // Re-enable button and hide loading state
+             if (refreshButton) refreshButton.disabled = false;
+            if(buttonText) buttonText.style.display = 'inline-block';
+            if(loadingIndicator) loadingIndicator.style.display = 'none';
+
+            let errorMessage = "Failed to refresh ingredient list.";
+            if (error && typeof error === 'object' && error.message) {
+                errorMessage += ` Server message: ${error.message.replace(/^Exception: /, '').replace(/^Error: /, '')}`;
+            } else if (typeof error === 'string') {
+                 errorMessage += ` Server message: ${error}`;
+            }
+            displayError(errorMessage);
+        }
+
+        /** Populates the base spirit dropdown */
+        function populateBaseSpiritDropdown(selectElement) {
+            if (!selectElement) return;
+            const currentValue = selectElement.value; // Preserve selection attempt
+            selectElement.innerHTML = '<option value="">-- Select Base Spirit (Optional) --</option>'; // Clear
+
+            if (window.baseSpirits && window.baseSpirits.length > 0) {
+                window.baseSpirits.forEach(spirit => addOption(selectElement, spirit, spirit));
+                // Try to restore selection
+                 if (currentValue && window.baseSpirits.includes(currentValue)) {
+                    selectElement.value = currentValue;
+                } else {
+                    selectElement.value = ""; // Reset if previous not found
+                }
+            } else {
+                selectElement.innerHTML += '<option value="" disabled>No spirits found</option>';
+            }
+        }
+
+        // --- Initialization & Other Listeners ---
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("DOM Content Loaded. Initializing form...");
+            
+            // Check if template variables are properly loaded
+            if (!Array.isArray(window.ingredientNames) || window.ingredientNames.length === 0 || 
+                !Array.isArray(window.baseSpirits) || window.baseSpirits.length === 0) {
+                console.warn("Template variables not properly loaded, attempting to fetch data from server...");
+                // Fetch data from server as fallback
+                google.script.run
+                    .withSuccessHandler(handleInitialDataLoad)
+                    .withFailureHandler(handleInitialDataError)
+                    .getDataForBeverageForm();
+                return; // Exit early, handleInitialDataLoad will continue initialization
+            }
+            
+            initializeForm();
+        });
+        
+        /** Handles successful initial data load from server */
+        function handleInitialDataLoad(data) {
+            console.log("Initial data loaded from server:", data);
+            if (data && Array.isArray(data.ingredientNames) && Array.isArray(data.baseSpirits)) {
+                window.ingredientNames = data.ingredientNames;
+                window.baseSpirits = data.baseSpirits;
+                initializeForm();
+            } else {
+                console.error("Invalid data format received from server:", data);
+                displayError("Failed to load ingredient data. Please refresh the page.");
+            }
+        }
+        
+        /** Handles error during initial data load */
+        function handleInitialDataError(error) {
+            console.error("Failed to load initial data:", error);
+            displayError("Failed to load ingredient data. Please refresh the page.");
+            // Still try to initialize with empty arrays
+            window.ingredientNames = [];
+            window.baseSpirits = [];
+            initializeForm();
+        }
+        
+        /** Initialize form components */
+        function initializeForm() {
+            console.log("Initializing form with data:", {
+                ingredientCount: window.ingredientNames?.length || 0,
+                spiritCount: window.baseSpirits?.length || 0
+            });
+            
+            // Populate initial dropdowns that depend on server data or generated lists
+            const initialIngredientSelect = document.getElementById('ingredientName1');
+            const initialSizeSelect = document.getElementById('measurementSize1');
+            const baseSpiritSelect = document.getElementById('baseSpirit');
+
+            if(initialIngredientSelect) populateIngredientDropdown(initialIngredientSelect);
+            if(initialSizeSelect) populateSizeDropdown(initialSizeSelect); // Populate sizes using generated list
+            if(baseSpiritSelect) populateBaseSpiritDropdown(baseSpiritSelect);
+
+            // Attach listeners to the initial ingredient group
+            attachIngredientGroupEventListeners(document.querySelector('#ingredient-group-1'));
+
+            // Initial call to set up the summary and menu preview based on default state
+            updateIngredientSummary();
+
+            // Attach listeners for action buttons
+            document.getElementById('add-ingredient-btn')?.addEventListener('click', handleAddIngredientRow);
+            document.getElementById('add-new-ingredient-btn')?.addEventListener('click', openIngredientIframeModal);
+            document.getElementById('refresh-ingredients-btn')?.addEventListener('click', handleRefreshIngredientsClick);
+
+            // Setup summary toggle (if it were still used)
+            // setupSummaryToggle(); // Removed as toggle button is hidden
+
+            console.log("Form Initialized.");
+        }
+
+        // --- Iframe Communication (Example) ---
+        window.addEventListener('message', function(event) {
+            // IMPORTANT: Add origin check for security in production environments!
+            // Example: Replace 'YOUR_INGREDIENT_APP_ORIGIN' with the actual origin (e.g., 'https://script.google.com')
+            // const expectedOrigin = 'YOUR_INGREDIENT_APP_ORIGIN';
+            // if (event.origin !== expectedOrigin) {
+            //     console.warn(`Message from unexpected origin (${event.origin}) ignored.`);
+            //     return;
+            // }
+
+            // Check the data received from the iframe
+            if (event.data === 'ingredientAdded') {
+                console.log("Beverage App: Received 'ingredientAdded' message from iframe.");
+                // The ingredient list refresh is now handled by the 'Close & Refresh List' button
+                // inside the closeIngredientIframeModal function. No automatic refresh on message needed.
+                // Optional: display a temporary info message
+                // displayInfoMessage("New ingredient added. Close the ingredient window and refresh the list when ready.");
+            } else if (event.data?.type === 'iframeReady') { // Example: If iframe sends status
+                 console.log("Beverage App: Ingredient iframe reported ready.");
+            } else {
+                 // Log other messages for debugging if needed
+                 // console.log("Beverage App: Message received from iframe:", event.data);
+            }
+        });
+
+        // --- Mobile Summary Toggle (Removed/Hidden) ---
+        // function setupSummaryToggle() { ... } // No longer needed as button is hidden
+
+    </script>
+</body>
+</html>
