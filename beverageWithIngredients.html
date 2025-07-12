@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <base target="_top">
+    <title>Beverage Management System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        /* === Base Styles === */
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+            color: #333;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: row;
+            gap: 30px;
+        }
+        
+        .beverage-section {
+            flex: 2;
+            padding: 25px;
+            background-color: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .summary-section {
+            flex: 1;
+            padding: 20px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            position: sticky;
+            top: 20px;
+            height: fit-content;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+            align-self: flex-start;
+        }
+        
+        /* === Header Styles === */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .page-title {
+            font-size: 2rem;
+            color: #2c3e50;
+            margin: 0;
+        }
+        
+        .enterprise-link {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: transform 0.2s;
+        }
+        
+        .enterprise-link:hover {
+            transform: translateY(-1px);
+            text-decoration: none;
+            color: white;
+        }
+        
+        /* === Form Styles === */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        input[type="text"], 
+        input[type="number"], 
+        select, 
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        
+        input:focus, 
+        select:focus, 
+        textarea:focus {
+            outline: none;
+            border-color: #4285f4;
+            box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+        }
+        
+        /* === Ingredient Selector Styles === */
+        .ingredient-selector {
+            position: relative;
+        }
+        
+        .ingredient-controls {
+            display: flex;
+            gap: 10px;
+            align-items: stretch;
+        }
+        
+        .ingredient-dropdown {
+            flex: 1;
+        }
+        
+        .add-ingredient-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background-color 0.2s;
+        }
+        
+        .add-ingredient-btn:hover {
+            background: #218838;
+        }
+        
+        /* === Modal Styles === */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            backdrop-filter: blur(4px);
+        }
+        
+        .modal-content {
+            background-color: #fff;
+            margin: 2% auto;
+            padding: 0;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        .modal-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8f9fa;
+            border-radius: 8px 8px 0 0;
+        }
+        
+        .modal-title {
+            margin: 0;
+            font-size: 1.25rem;
+            color: #2c3e50;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6c757d;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .close-btn:hover {
+            color: #dc3545;
+        }
+        
+        .modal-body {
+            padding: 25px;
+        }
+        
+        /* === Button Styles === */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #218838;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+        
+        /* === Message Styles === */
+        .message {
+            padding: 12px 16px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        /* === Progress Indicator === */
+        .progress-indicator {
+            background: #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        
+        /* === Responsive Design === */
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .ingredient-controls {
+                flex-direction: column;
+            }
+            
+            .modal-content {
+                width: 95%;
+                margin: 5% auto;
+            }
+        }
+        
+        /* === Loading Spinner === */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Beverage Creation Form -->
+        <div class="beverage-section">
+            <div class="page-header">
+                <h1 class="page-title">🍹 Create New Beverage</h1>
+                <a href="https://script.google.com/d/1rpVR1c_8a7RbFy6dmCJa2kSCjgQ_stw-EdpIN4v4F3bRla-szSbZyzy6/edit" 
+                   target="_blank" class="enterprise-link">
+                    🚀 Enterprise System
+                </a>
+            </div>
+            
+            <div id="main-message" class="message"></div>
+            <div id="progress-indicator" class="progress-indicator" style="display: none;">
+                Your progress is automatically saved as you work.
+            </div>
+            
+            <form id="beverage-form">
+                <!-- Basic Beverage Info -->
+                <div class="form-group">
+                    <label for="beverageName">Beverage Name *</label>
+                    <input type="text" id="beverageName" name="beverageName" required 
+                           placeholder="e.g., Classic Martini">
+                </div>
+                
+                <div class="form-group">
+                    <label for="beverageType">Beverage Type</label>
+                    <select id="beverageType" name="beverageType">
+                        <option value="">-- Select Type --</option>
+                        <option value="Cocktail">Cocktail</option>
+                        <option value="Mocktail">Mocktail</option>
+                        <option value="Shot">Shot</option>
+                        <option value="Punch">Punch</option>
+                        <option value="Coffee Drink">Coffee Drink</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                
+                <!-- Primary Ingredient with Add Option -->
+                <div class="form-group">
+                    <label for="primaryIngredient">Primary Ingredient *</label>
+                    <div class="ingredient-selector">
+                        <div class="ingredient-controls">
+                            <select id="primaryIngredient" name="primaryIngredient" 
+                                    class="ingredient-dropdown" required>
+                                <option value="">-- Select Primary Ingredient --</option>
+                                <? if (ingredientNames && ingredientNames.length > 0) { ?>
+                                    <? ingredientNames.forEach(function(ingredient) { ?>
+                                        <option value="<?= ingredient ?>"><?= ingredient ?></option>
+                                    <? }); ?>
+                                <? } ?>
+                            </select>
+                            <button type="button" class="add-ingredient-btn" 
+                                    onclick="openIngredientModal('primaryIngredient')">
+                                ➕ Add New
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="primaryAmount">Primary Amount</label>
+                    <input type="number" id="primaryAmount" name="primaryAmount" 
+                           step="0.25" min="0" placeholder="e.g., 2">
+                </div>
+                
+                <div class="form-group">
+                    <label for="primaryUnit">Primary Unit</label>
+                    <select id="primaryUnit" name="primaryUnit">
+                        <option value="oz">oz</option>
+                        <option value="ml">ml</option>
+                        <option value="cups">cups</option>
+                        <option value="tsp">tsp</option>
+                        <option value="tbsp">tbsp</option>
+                        <option value="dashes">dashes</option>
+                        <option value="splash">splash</option>
+                    </select>
+                </div>
+                
+                <!-- Secondary Ingredient with Add Option -->
+                <div class="form-group">
+                    <label for="secondaryIngredient">Secondary Ingredient</label>
+                    <div class="ingredient-selector">
+                        <div class="ingredient-controls">
+                            <select id="secondaryIngredient" name="secondaryIngredient" 
+                                    class="ingredient-dropdown">
+                                <option value="">-- Select Secondary Ingredient --</option>
+                                <? if (ingredientNames && ingredientNames.length > 0) { ?>
+                                    <? ingredientNames.forEach(function(ingredient) { ?>
+                                        <option value="<?= ingredient ?>"><?= ingredient ?></option>
+                                    <? }); ?>
+                                <? } ?>
+                            </select>
+                            <button type="button" class="add-ingredient-btn" 
+                                    onclick="openIngredientModal('secondaryIngredient')">
+                                ➕ Add New
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="secondaryAmount">Secondary Amount</label>
+                    <input type="number" id="secondaryAmount" name="secondaryAmount" 
+                           step="0.25" min="0" placeholder="e.g., 0.5">
+                </div>
+                
+                <div class="form-group">
+                    <label for="secondaryUnit">Secondary Unit</label>
+                    <select id="secondaryUnit" name="secondaryUnit">
+                        <option value="oz">oz</option>
+                        <option value="ml">ml</option>
+                        <option value="cups">cups</option>
+                        <option value="tsp">tsp</option>
+                        <option value="tbsp">tbsp</option>
+                        <option value="dashes">dashes</option>
+                        <option value="splash">splash</option>
+                    </select>
+                </div>
+                
+                <!-- Additional Info -->
+                <div class="form-group">
+                    <label for="garnish">Garnish</label>
+                    <input type="text" id="garnish" name="garnish" 
+                           placeholder="e.g., Lemon twist, Olive">
+                </div>
+                
+                <div class="form-group">
+                    <label for="glassType">Glass Type</label>
+                    <select id="glassType" name="glassType">
+                        <option value="">-- Select Glass --</option>
+                        <option value="Martini">Martini</option>
+                        <option value="Rocks">Rocks</option>
+                        <option value="Highball">Highball</option>
+                        <option value="Shot">Shot</option>
+                        <option value="Wine">Wine</option>
+                        <option value="Coupe">Coupe</option>
+                        <option value="Mug">Mug</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="instructions">Instructions</label>
+                    <textarea id="instructions" name="instructions" rows="4" 
+                              placeholder="Describe how to prepare this beverage..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">
+                        <span id="submit-text">Create Beverage</span>
+                        <span id="submit-loading" class="loading" style="display: none;"></span>
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="clearForm()">
+                        Clear Form
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Summary Section -->
+        <div class="summary-section">
+            <h3>Recipe Summary</h3>
+            <div id="recipe-preview">
+                <p class="text-muted">Fill out the form to see your recipe preview here.</p>
+            </div>
+            
+            <h4>Quick Actions</h4>
+            <button type="button" class="btn btn-success" style="width: 100%; margin-bottom: 10px;" 
+                    onclick="openIngredientModal()">
+                ➕ Add Ingredient
+            </button>
+            
+            <div class="progress-indicator">
+                <strong>Recent Ingredients:</strong>
+                <div id="recent-ingredients">No recent additions</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add Ingredient Modal -->
+    <div id="ingredient-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Add New Ingredient</h3>
+                <button type="button" class="close-btn" onclick="closeIngredientModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="ingredient-message" class="message"></div>
+                
+                <form id="ingredient-form">
+                    <div class="form-group">
+                        <label for="ingredientName">Ingredient Name *</label>
+                        <input type="text" id="ingredientName" name="ingredientName" required 
+                               placeholder="Enter ingredient name">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="category">Category *</label>
+                        <select id="category" name="category" required>
+                            <option value="">-- Select Category --</option>
+                            <option value="Vodka">Vodka</option>
+                            <option value="Tequila">Tequila</option>
+                            <option value="Bourbon">Bourbon</option>
+                            <option value="Scotch">Scotch</option>
+                            <option value="Gin">Gin</option>
+                            <option value="Rum">Rum</option>
+                            <option value="Liqueurs/Cordials/Schnapps">Liqueurs/Cordials/Schnapps</option>
+                            <option value="Brandy & Cognac">Brandy & Cognac</option>
+                            <option value="Mixers & Modifiers">Mixers & Modifiers</option>
+                            <option value="Fresh Ingredients">Fresh Ingredients</option>
+                            <option value="Garnishes & Accessories">Garnishes & Accessories</option>
+                            <option value="Wine">Wine</option>
+                            <option value="Beer">Beer</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="labelBrand">Brand/Label</label>
+                        <input type="text" id="labelBrand" name="labelBrand" 
+                               placeholder="Brand or label name">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="abv">ABV (%)</label>
+                        <input type="number" id="abv" name="abv" step="0.1" min="0" max="100" 
+                               placeholder="Alcohol by volume percentage">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="costPerUnit">Cost Per Unit ($)</label>
+                        <input type="number" id="costPerUnit" name="costPerUnit" step="0.01" min="0" 
+                               placeholder="Cost per bottle/unit">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="unitSize">Unit Size</label>
+                        <input type="text" id="unitSize" name="unitSize" 
+                               placeholder="e.g., 750ml, 1L">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="unitMetric">Unit Metric</label>
+                        <select id="unitMetric" name="unitMetric">
+                            <option value="ml">ml</option>
+                            <option value="L">L</option>
+                            <option value="oz">oz</option>
+                            <option value="each">each</option>
+                            <option value="kg">kg</option>
+                            <option value="g">g</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-success">
+                            <span id="ingredient-submit-text">Add Ingredient</span>
+                            <span id="ingredient-submit-loading" class="loading" style="display: none;"></span>
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="closeIngredientModal()">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentTargetDropdown = null;
+        let availableIngredients = <?= JSON.stringify(ingredientNames || []) ?>;
+        let baseSpirits = <?= JSON.stringify(baseSpirits || []) ?>;
+        
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSavedProgress();
+            updateRecipePreview();
+            
+            // Auto-save progress as user types
+            const formElements = document.querySelectorAll('#beverage-form input, #beverage-form select, #beverage-form textarea');
+            formElements.forEach(element => {
+                element.addEventListener('input', function() {
+                    saveProgress();
+                    updateRecipePreview();
+                });
+            });
+        });
+        
+        // Progress saving/loading
+        function saveProgress() {
+            const formData = new FormData(document.getElementById('beverage-form'));
+            const progress = {};
+            for (let [key, value] of formData.entries()) {
+                progress[key] = value;
+            }
+            localStorage.setItem('beverageProgress', JSON.stringify(progress));
+            document.getElementById('progress-indicator').style.display = 'block';
+        }
+        
+        function loadSavedProgress() {
+            const saved = localStorage.getItem('beverageProgress');
+            if (saved) {
+                const progress = JSON.parse(saved);
+                Object.keys(progress).forEach(key => {
+                    const element = document.getElementById(key);
+                    if (element) {
+                        element.value = progress[key];
+                    }
+                });
+                document.getElementById('progress-indicator').style.display = 'block';
+            }
+        }
+        
+        function clearProgress() {
+            localStorage.removeItem('beverageProgress');
+            document.getElementById('progress-indicator').style.display = 'none';
+        }
+        
+        // Update recipe preview
+        function updateRecipePreview() {
+            const form = document.getElementById('beverage-form');
+            const formData = new FormData(form);
+            
+            let preview = '<div>';
+            
+            const name = formData.get('beverageName');
+            if (name) {
+                preview += `<h4>${name}</h4>`;
+            }
+            
+            const type = formData.get('beverageType');
+            if (type) {
+                preview += `<p><strong>Type:</strong> ${type}</p>`;
+            }
+            
+            const glass = formData.get('glassType');
+            if (glass) {
+                preview += `<p><strong>Glass:</strong> ${glass}</p>`;
+            }
+            
+            preview += '<h5>Ingredients:</h5><ul>';
+            
+            const primary = formData.get('primaryIngredient');
+            const primaryAmount = formData.get('primaryAmount');
+            const primaryUnit = formData.get('primaryUnit');
+            if (primary) {
+                preview += `<li>${primaryAmount || '?'} ${primaryUnit || 'oz'} ${primary}</li>`;
+            }
+            
+            const secondary = formData.get('secondaryIngredient');
+            const secondaryAmount = formData.get('secondaryAmount');
+            const secondaryUnit = formData.get('secondaryUnit');
+            if (secondary) {
+                preview += `<li>${secondaryAmount || '?'} ${secondaryUnit || 'oz'} ${secondary}</li>`;
+            }
+            
+            preview += '</ul>';
+            
+            const garnish = formData.get('garnish');
+            if (garnish) {
+                preview += `<p><strong>Garnish:</strong> ${garnish}</p>`;
+            }
+            
+            const instructions = formData.get('instructions');
+            if (instructions) {
+                preview += `<p><strong>Instructions:</strong> ${instructions}</p>`;
+            }
+            
+            preview += '</div>';
+            
+            if (!name && !primary) {
+                preview = '<p class="text-muted">Fill out the form to see your recipe preview here.</p>';
+            }
+            
+            document.getElementById('recipe-preview').innerHTML = preview;
+        }
+        
+        // Modal functions
+        function openIngredientModal(targetDropdown = null) {
+            currentTargetDropdown = targetDropdown;
+            document.getElementById('ingredient-modal').style.display = 'block';
+            document.getElementById('ingredientName').focus();
+            
+            // Pre-populate category if we can infer from context
+            if (targetDropdown === 'primaryIngredient') {
+                const type = document.getElementById('beverageType').value;
+                if (type === 'Cocktail') {
+                    // Suggest spirit category for cocktails
+                    document.getElementById('category').value = 'Gin';
+                }
+            }
+        }
+        
+        function closeIngredientModal() {
+            document.getElementById('ingredient-modal').style.display = 'none';
+            document.getElementById('ingredient-form').reset();
+            hideMessage('ingredient-message');
+            currentTargetDropdown = null;
+        }
+        
+        // Message functions
+        function showMessage(elementId, message, type = 'info') {
+            const messageElement = document.getElementById(elementId);
+            messageElement.textContent = message;
+            messageElement.className = `message ${type}`;
+            messageElement.style.display = 'block';
+            
+            if (type === 'success') {
+                setTimeout(() => hideMessage(elementId), 5000);
+            }
+        }
+        
+        function hideMessage(elementId) {
+            const messageElement = document.getElementById(elementId);
+            messageElement.style.display = 'none';
+        }
+        
+        // Form submission functions
+        document.getElementById('beverage-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const submitText = document.getElementById('submit-text');
+            const submitLoading = document.getElementById('submit-loading');
+            
+            submitText.style.display = 'none';
+            submitLoading.style.display = 'inline-block';
+            
+            const formData = new FormData(this);
+            const beverageData = {};
+            for (let [key, value] of formData.entries()) {
+                beverageData[key] = value;
+            }
+            
+            // Call server function to save beverage
+            google.script.run
+                .withSuccessHandler(function(result) {
+                    showMessage('main-message', 'Beverage created successfully!', 'success');
+                    clearForm();
+                    clearProgress();
+                    
+                    submitText.style.display = 'inline';
+                    submitLoading.style.display = 'none';
+                })
+                .withFailureHandler(function(error) {
+                    showMessage('main-message', 'Error creating beverage: ' + error.message, 'error');
+                    
+                    submitText.style.display = 'inline';
+                    submitLoading.style.display = 'none';
+                })
+                .saveBeverageData(beverageData);
+        });
+        
+        document.getElementById('ingredient-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const submitText = document.getElementById('ingredient-submit-text');
+            const submitLoading = document.getElementById('ingredient-submit-loading');
+            
+            submitText.style.display = 'none';
+            submitLoading.style.display = 'inline-block';
+            
+            const formData = new FormData(this);
+            const ingredientData = {};
+            for (let [key, value] of formData.entries()) {
+                ingredientData[key] = value;
+            }
+            
+            // Call server function to save ingredient
+            google.script.run
+                .withSuccessHandler(function(result) {
+                    showMessage('ingredient-message', 'Ingredient added successfully!', 'success');
+                    
+                    // Add to available ingredients
+                    const newIngredient = ingredientData.ingredientName;
+                    if (!availableIngredients.includes(newIngredient)) {
+                        availableIngredients.push(newIngredient);
+                        availableIngredients.sort();
+                    }
+                    
+                    // Update all dropdowns
+                    updateIngredientDropdowns();
+                    
+                    // Auto-select in target dropdown if specified
+                    if (currentTargetDropdown) {
+                        document.getElementById(currentTargetDropdown).value = newIngredient;
+                        saveProgress();
+                        updateRecipePreview();
+                    }
+                    
+                    // Update recent ingredients
+                    updateRecentIngredients(newIngredient);
+                    
+                    setTimeout(() => {
+                        closeIngredientModal();
+                    }, 1500);
+                    
+                    submitText.style.display = 'inline';
+                    submitLoading.style.display = 'none';
+                })
+                .withFailureHandler(function(error) {
+                    showMessage('ingredient-message', 'Error adding ingredient: ' + error.message, 'error');
+                    
+                    submitText.style.display = 'inline';
+                    submitLoading.style.display = 'none';
+                })
+                .saveIngredientData(ingredientData);
+        });
+        
+        // Update ingredient dropdowns
+        function updateIngredientDropdowns() {
+            const dropdowns = ['primaryIngredient', 'secondaryIngredient'];
+            
+            dropdowns.forEach(dropdownId => {
+                const dropdown = document.getElementById(dropdownId);
+                const currentValue = dropdown.value;
+                
+                // Clear and rebuild options
+                dropdown.innerHTML = `<option value="">-- Select ${dropdownId.includes('primary') ? 'Primary' : 'Secondary'} Ingredient --</option>`;
+                
+                availableIngredients.forEach(ingredient => {
+                    const option = document.createElement('option');
+                    option.value = ingredient;
+                    option.textContent = ingredient;
+                    dropdown.appendChild(option);
+                });
+                
+                // Restore selection if it still exists
+                if (availableIngredients.includes(currentValue)) {
+                    dropdown.value = currentValue;
+                }
+            });
+        }
+        
+        // Update recent ingredients display
+        function updateRecentIngredients(newIngredient) {
+            let recent = JSON.parse(localStorage.getItem('recentIngredients') || '[]');
+            
+            // Add new ingredient to the beginning
+            recent.unshift(newIngredient);
+            
+            // Keep only the last 5
+            recent = recent.slice(0, 5);
+            
+            localStorage.setItem('recentIngredients', JSON.stringify(recent));
+            
+            // Update display
+            const recentDiv = document.getElementById('recent-ingredients');
+            if (recent.length > 0) {
+                recentDiv.innerHTML = recent.map(ing => `<div style="padding: 2px 0;">• ${ing}</div>`).join('');
+            } else {
+                recentDiv.textContent = 'No recent additions';
+            }
+        }
+        
+        // Load recent ingredients on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const recent = JSON.parse(localStorage.getItem('recentIngredients') || '[]');
+            updateRecentIngredients();
+        });
+        
+        // Clear form function
+        function clearForm() {
+            document.getElementById('beverage-form').reset();
+            updateRecipePreview();
+            hideMessage('main-message');
+        }
+        
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('ingredient-modal');
+            if (event.target === modal) {
+                closeIngredientModal();
+            }
+        }
+    </script>
+</body>
+</html>
