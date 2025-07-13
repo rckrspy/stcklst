@@ -5,6 +5,60 @@
  */
 
 /**
+ * Ensure spreadsheet has required sheet structure
+ * @param {Spreadsheet} spreadsheet The spreadsheet to check
+ * @param {string} sheetName The sheet name to ensure exists
+ * @param {Array} headers The headers to add if creating new sheet
+ * @return {Sheet} The sheet object
+ */
+function ensureSheetExists(spreadsheet, sheetName, headers = []) {
+  let sheet = spreadsheet.getSheetByName(sheetName);
+  
+  if (!sheet) {
+    Logger.log(`Creating missing sheet: ${sheetName}`);
+    sheet = spreadsheet.insertSheet(sheetName);
+    
+    if (headers.length > 0) {
+      sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+      sheet.setFrozenRows(1);
+      Logger.log(`Added headers to new sheet: ${sheetName}`);
+    }
+  }
+  
+  return sheet;
+}
+
+/**
+ * Get database IDs from script properties with fallbacks
+ * @return {object} Database configuration object
+ */
+function getDatabaseConfig() {
+  try {
+    const properties = PropertiesService.getScriptProperties().getProperties();
+    
+    // Try to get from script properties first
+    const config = {
+      ingredients: properties.ingredients || properties.systemDbId || "1-M1E2PVtAmGYj4SviOqo97RXxfhVEEtnxWROa3lHU3c",
+      recipes: properties.recipes || properties.beveragesDbId || "1x1ZWaDh90mNV6uey5idKPHeltvA5Xy7tvYgyzWJxKb4",
+      system: properties.system || properties.systemDbId || properties.ingredients || "1-M1E2PVtAmGYj4SviOqo97RXxfhVEEtnxWROa3lHU3c"
+    };
+    
+    Logger.log('Database config resolved:', JSON.stringify(config));
+    return config;
+    
+  } catch (error) {
+    Logger.log('Error getting database config, using fallbacks: ' + error.toString());
+    
+    // Fallback to hardcoded values if properties service fails
+    return {
+      ingredients: "1-M1E2PVtAmGYj4SviOqo97RXxfhVEEtnxWROa3lHU3c",
+      recipes: "1x1ZWaDh90mNV6uey5idKPHeltvA5Xy7tvYgyzWJxKb4",
+      system: "1-M1E2PVtAmGYj4SviOqo97RXxfhVEEtnxWROa3lHU3c"
+    };
+  }
+}
+
+/**
  * Serves the HTML interface for the Ingredient Data Entry form.
  * Allows the web app to be embedded in an iframe.
  * @param {object} e The event parameter for a GET request.
@@ -31,12 +85,15 @@ function saveIngredientData(formData, rowIndexToReplace = null) {
   const functionStartTime = new Date();
   Logger.log(`saveIngredientData called. Action: ${rowIndexToReplace ? 'Replace Row ' + rowIndexToReplace : 'Add/Check Duplicate'}. Data: ${JSON.stringify(formData)}`);
   
+  // Get database configuration dynamically
+  const dbConfig = getDatabaseConfig();
+  const spreadsheetId = dbConfig.ingredients;
+  
   // Debug: Force console logging
   console.log("BACKEND DEBUG: saveIngredientData called with:", formData);
-  console.log("BACKEND DEBUG: Spreadsheet ID:", "1-M1E2PVtAmGYj4SviOqo97RXxfhVEEtnxWROa3lHU3c");
+  console.log("BACKEND DEBUG: Resolved Spreadsheet ID:", spreadsheetId);
 
   // --- Configuration ---
-  const spreadsheetId = "1-M1E2PVtAmGYj4SviOqo97RXxfhVEEtnxWROa3lHU3c"; // *** REPLACE WITH YOUR SPREADSHEET ID ***
   const sheetName = "database"; // Ensure this matches your sheet tab name
 
   // *** CRITICAL: Define headers IN THE EXACT ORDER THEY APPEAR IN YOUR SPREADSHEET ***
@@ -54,11 +111,9 @@ function saveIngredientData(formData, rowIndexToReplace = null) {
   try {
     // --- Spreadsheet Access ---
     const ss = SpreadsheetApp.openById(spreadsheetId);
-    const sheet = ss.getSheetByName(sheetName);
-
-    if (!sheet) {
-      throw new Error(`Sheet "${sheetName}" not found in spreadsheet ID "${spreadsheetId}". Please check configuration.`);
-    }
+    
+    // Ensure the database sheet exists with proper headers
+    const sheet = ensureSheetExists(ss, sheetName, headers);
     // --- End Spreadsheet Access ---
 
     // --- Check for Multi-Size Submission ---

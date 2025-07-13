@@ -1,4 +1,34 @@
 /**
+ * Get database IDs from script properties with fallbacks
+ * @return {object} Database configuration object
+ */
+function getDatabaseConfig() {
+  try {
+    const properties = PropertiesService.getScriptProperties().getProperties();
+    
+    // Try to get from script properties first
+    const config = {
+      ingredients: properties.ingredients || properties.systemDbId || "1-M1E2PVtAmGYj4SviOqo97RXxfhVEEtnxWROa3lHU3c",
+      recipes: properties.recipes || properties.beveragesDbId || "1x1ZWaDh90mNV6uey5idKPHeltvA5Xy7tvYgyzWJxKb4",
+      system: properties.system || properties.systemDbId || properties.ingredients || "1-M1E2PVtAmGYj4SviOqo97RXxfhVEEtnxWROa3lHU3c"
+    };
+    
+    Logger.log('Database config resolved:', JSON.stringify(config));
+    return config;
+    
+  } catch (error) {
+    Logger.log('Error getting database config, using fallbacks: ' + error.toString());
+    
+    // Fallback to hardcoded values if properties service fails
+    return {
+      ingredients: "1-M1E2PVtAmGYj4SviOqo97RXxfhVEEtnxWROa3lHU3c",
+      recipes: "1x1ZWaDh90mNV6uey5idKPHeltvA5Xy7tvYgyzWJxKb4",
+      system: "1-M1E2PVtAmGYj4SviOqo97RXxfhVEEtnxWROa3lHU3c"
+    };
+  }
+}
+
+/**
  * Serves the HTML for the Beverage Data Entry form.
  * Fetches ingredient names and base spirits for dropdowns.
  */
@@ -34,7 +64,8 @@ function doGetBeverage(e) {
  * @returns {object} An object containing { ingredientNames: string[], baseSpirits: string[] }
  */
 function getDataForBeverageForm() {
-  const ingredientSsId = "1-M1E2PVtAmGYj4SviOqo97RXxfhVEEtnxWROa3lHU3c"; // *** USE YOUR INGREDIENT SPREADSHEET ID ***
+  const dbConfig = getDatabaseConfig();
+  const ingredientSsId = dbConfig.ingredients;
   const ingredientSheetName = "database";
   let ingredientNames = [];
   let baseSpirits = [];
@@ -109,7 +140,8 @@ function getIngredientNames() {
    // You could call the new function here for compatibility if needed:
    // return getDataForBeverageForm().ingredientNames;
    // Or keep the old implementation if preferred for separation:
-  const ingredientSs = SpreadsheetApp.openById("1-M1E2PVtAmGYj4SviOqo97RXxfhVEEtnxWROa3lHU3c");
+  const dbConfig = getDatabaseConfig();
+  const ingredientSs = SpreadsheetApp.openById(dbConfig.ingredients);
   const ingredientSheet = ingredientSs.getSheetByName("database");
   if (!ingredientSheet) { Logger.log("Ingredient sheet not found."); return []; }
   const ingredientData = ingredientSheet.getDataRange().getValues();
@@ -132,7 +164,8 @@ function getIngredientNames() {
  * @return {string} A success message or a JSON string of existing data if duplicate found.
  */
 function saveBeverageData(formData, action = 'add', rowIndexToReplace = null) {
-  const beverageSsId = "1x1ZWaDh90mNV6uey5idKPHeltvA5Xy7tvYgyzWJxKb4"; // *** REPLACE WITH YOUR BEVERAGE SPREADSHEET ID ***
+  const dbConfig = getDatabaseConfig();
+  const beverageSsId = dbConfig.recipes;
   const beverageSheetName = "database";
 
   try {
@@ -473,7 +506,8 @@ function getNextVersionedBeverageName(beverageName, sheet) {
 }
 
 function processIngredients() {
-  const ss = SpreadsheetApp.openById('1x1ZWaDh90mNV6uey5idKPHeltvA5Xy7tvYgyzWJxKb4');
+  const dbConfig = getDatabaseConfig();
+  const ss = SpreadsheetApp.openById(dbConfig.recipes);
   const sheet = ss.getSheetByName('database'); // Assuming your data is on the active sheet
   const ingredientsColumnName = 'ingredients';
   const menuIngredientStringColumnName = 'menuIngredientString';

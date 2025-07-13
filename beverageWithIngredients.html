@@ -617,14 +617,21 @@
             <div class="page-header">
                 <div>
                     <h1 class="page-title">🍹 Create New Beverage</h1>
-                    <div class="version-info" style="font-size: 0.8rem; color: #6c757d; margin-top: 5px;">
-                        Version 3.3.0 - Professional Recipe Enhancements
+                    <div id="version-info" class="version-info" style="font-size: 0.8rem; color: #6c757d; margin-top: 5px;">
+                        Loading version info...
+                    </div>
+                    <div id="version-status" class="version-status" style="font-size: 0.75rem; margin-top: 3px; display: none;">
                     </div>
                 </div>
-                <a href="https://script.google.com/d/1rpVR1c_8a7RbFy6dmCJa2kSCjgQ_stw-EdpIN4v4F3bRla-szSbZyzy6/edit" 
-                   target="_blank" class="enterprise-link">
-                    🚀 Enterprise System
-                </a>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button type="button" id="check-version-btn" class="version-check-btn" style="background: #6c757d; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 0.8rem; cursor: pointer;">
+                        Check Version
+                    </button>
+                    <a href="https://script.google.com/d/1rpVR1c_8a7RbFy6dmCJa2kSCjgQ_stw-EdpIN4v4F3bRla-szSbZyzy6/edit" 
+                       target="_blank" class="enterprise-link">
+                        🚀 Enterprise System
+                    </a>
+                </div>
             </div>
             
             <div id="main-message" class="message"></div>
@@ -897,6 +904,25 @@
                     </div>
                     
                     <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="multipleQuantities" name="multipleQuantities" onchange="toggleMultiSizeSection()">
+                            Available in multiple quantities?
+                        </label>
+                        <small style="display: block; margin-top: 5px; font-size: 0.8em; color: gray;">Check this if the ingredient is sold in different sizes (e.g., 750ml, 1L, 1.75L bottles)</small>
+                    </div>
+                    
+                    <!-- Multi-Size Section (initially hidden) -->
+                    <div id="multiSizeSection" style="display: none; border: 1px solid #ddd; padding: 15px; margin: 15px 0; border-radius: 5px; background: #f9f9f9;">
+                        <h4 style="margin-top: 0; color: #333;">Additional Size Options</h4>
+                        <div id="multiSizeContainer">
+                            <!-- Dynamic size entries will be added here -->
+                        </div>
+                        <button type="button" onclick="addSizeEntry()" class="btn btn-secondary" style="margin-top: 10px;">
+                            Add Another Size
+                        </button>
+                    </div>
+                    
+                    <div class="form-group">
                         <button type="submit" class="btn btn-success">
                             <span id="ingredient-submit-text">Add Ingredient</span>
                             <span id="ingredient-submit-loading" class="loading" style="display: none;"></span>
@@ -1040,6 +1066,44 @@
         </div>
     </div>
 
+    <!-- Version Update Modal -->
+    <div id="version-update-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">🔄 System Update Available</h3>
+                <button type="button" class="close-btn" onclick="closeVersionModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Your spreadsheet database needs to be updated to the latest version for optimal compatibility and new features.</p>
+                
+                <div style="padding: 15px; background-color: #f8f9fa; border-radius: 5px; margin: 20px 0;">
+                    <h4 style="margin-top: 0; color: #495057;">What happens during the update?</h4>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        <li>✅ Your existing data will be preserved</li>
+                        <li>✅ New features and improvements will be added</li>
+                        <li>✅ Database schema will be updated to latest version</li>
+                        <li>✅ Any missing sheets or columns will be created</li>
+                    </ul>
+                </div>
+                
+                <div style="padding: 15px; background-color: #fff3cd; border-radius: 5px; margin: 20px 0; border-left: 4px solid #ffc107;">
+                    <p style="margin: 0; color: #856404;"><strong>⚠️ Important:</strong> The update process may take a few minutes. Please don't close this window during the update.</p>
+                </div>
+                
+                <div id="update-status" style="margin: 15px 0; font-weight: bold; min-height: 20px;"></div>
+                
+                <div class="modal-buttons" style="text-align: center; margin-top: 20px;">
+                    <button type="button" class="btn btn-warning update-confirm-btn" onclick="performUpdate()" style="margin: 0 10px; padding: 10px 20px;">
+                        🔄 Update Spreadsheet
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeVersionModal()" style="margin: 0 10px; padding: 10px 20px;">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Global variables
         let currentTargetDropdown = null;
@@ -1050,13 +1114,41 @@
         
         // Safe initialization of ingredient data
         try {
+            console.log('=== CLIENT-SIDE INGREDIENT DATA DEBUG ===');
             const ingredientNamesData = <?= JSON.stringify(ingredientNames || []) ?>;
             const baseSpiritsData = <?= JSON.stringify(baseSpirits || []) ?>;
             
-            availableIngredients = Array.isArray(ingredientNamesData) ? ingredientNamesData : [];
-            baseSpirits = Array.isArray(baseSpiritsData) ? baseSpiritsData : [];
+            console.log('Raw ingredientNamesData from server:', ingredientNamesData);
+            console.log('Raw baseSpiritsData from server:', baseSpiritsData);
+            console.log('Type of ingredientNamesData:', typeof ingredientNamesData);
+            console.log('Is ingredientNamesData array:', Array.isArray(ingredientNamesData));
             
+            // Fix: Handle JSON string parsing properly
+            if (typeof ingredientNamesData === 'string') {
+                console.log('Parsing ingredientNamesData as JSON string...');
+                availableIngredients = JSON.parse(ingredientNamesData);
+            } else if (Array.isArray(ingredientNamesData)) {
+                availableIngredients = ingredientNamesData;
+            } else {
+                console.warn('Unexpected ingredientNamesData type, using empty array');
+                availableIngredients = [];
+            }
+            
+            if (typeof baseSpiritsData === 'string') {
+                console.log('Parsing baseSpiritsData as JSON string...');
+                baseSpirits = JSON.parse(baseSpiritsData);
+            } else if (Array.isArray(baseSpiritsData)) {
+                baseSpirits = baseSpiritsData;
+            } else {
+                console.warn('Unexpected baseSpiritsData type, using empty array');
+                baseSpirits = [];
+            }
+            
+            console.log('After parsing - Final availableIngredients:', availableIngredients);
+            console.log('After parsing - Final baseSpirits:', baseSpirits);
+            console.log('After parsing - Type check:', typeof availableIngredients, Array.isArray(availableIngredients));
             console.log('Ingredients loaded:', availableIngredients.length, 'Base spirits loaded:', baseSpirits.length);
+            console.log('=== END CLIENT-SIDE INGREDIENT DATA DEBUG ===');
         } catch (error) {
             console.error('Error loading ingredient data:', error);
             availableIngredients = [];
@@ -1068,6 +1160,7 @@
             initializeIngredientsSection();
             loadSavedProgress();
             updateRecipePreview();
+            checkSystemVersion(); // Check version on load
             
             // Auto-save progress as user types
             const formElements = document.querySelectorAll('#beverage-form input, #beverage-form select, #beverage-form textarea');
@@ -1077,6 +1170,12 @@
                     updateRecipePreview();
                 });
             });
+            
+            // Version check button
+            const versionBtn = document.getElementById('check-version-btn');
+            if (versionBtn) {
+                versionBtn.addEventListener('click', checkSystemVersion);
+            }
         });
         
         // === Dynamic Ingredients Management === 
@@ -1635,6 +1734,12 @@
             
             // Reset subcategory dropdown
             document.getElementById('subcategory-group').style.display = 'none';
+            
+            // Reset multi-size section
+            document.getElementById('multipleQuantities').checked = false;
+            document.getElementById('multiSizeSection').style.display = 'none';
+            document.getElementById('multiSizeContainer').innerHTML = '';
+            sizeEntryCounter = 0;
             document.getElementById('subcategory').innerHTML = '<option value="">-- Select Subcategory --</option>';
         }
         
@@ -2011,10 +2116,48 @@
                 ingredientData[key] = value;
             }
             
+            // Handle multi-size data collection
+            ingredientData.multipleQuantities = document.getElementById('multipleQuantities').checked ? 'on' : '';
+            
+            // If multi-size is enabled, collect all size entries
+            if (ingredientData.multipleQuantities === 'on') {
+                const sizeEntries = document.querySelectorAll('.size-entry');
+                sizeEntries.forEach((entry, index) => {
+                    const counter = index + 1;
+                    const sizeInput = entry.querySelector(`input[name*="multiSize_"]`);
+                    const metricInput = entry.querySelector(`select[name*="multiMetric_"]`);
+                    const costInput = entry.querySelector(`input[name*="multiCost_"]`);
+                    
+                    if (sizeInput && metricInput && costInput) {
+                        ingredientData[`multiSize_${counter}`] = sizeInput.value;
+                        ingredientData[`multiMetric_${counter}`] = metricInput.value;
+                        ingredientData[`multiCost_${counter}`] = costInput.value;
+                    }
+                });
+            }
+            
             // Call server function to save ingredient
             google.script.run
                 .withSuccessHandler(function(result) {
-                    showMessage('ingredient-message', 'Ingredient added successfully!', 'success');
+                    console.log('Ingredient save result:', result);
+                    
+                    // Handle the new response format {success: true/false, message: "..."}
+                    if (result && result.success === false) {
+                        // Handle duplicates or other errors
+                        if (result.duplicate) {
+                            showMessage('ingredient-message', 'Ingredient already exists: ' + result.message, 'warning');
+                        } else {
+                            showMessage('ingredient-message', 'Error: ' + result.message, 'error');
+                        }
+                        
+                        submitText.style.display = 'inline';
+                        submitLoading.style.display = 'none';
+                        return;
+                    }
+                    
+                    // Success case
+                    const successMessage = (result && result.message) ? result.message : 'Ingredient added successfully!';
+                    showMessage('ingredient-message', successMessage, 'success');
                     
                     // Add to available ingredients
                     const newIngredient = ingredientData.ingredientName;
@@ -2048,6 +2191,7 @@
                     submitLoading.style.display = 'none';
                 })
                 .withFailureHandler(function(error) {
+                    console.error('Ingredient save error:', error);
                     showMessage('ingredient-message', 'Error adding ingredient: ' + error.message, 'error');
                     
                     submitText.style.display = 'inline';
@@ -2058,26 +2202,38 @@
         
         // Update ingredient dropdowns
         function updateIngredientDropdowns() {
+            console.log('=== UPDATE INGREDIENT DROPDOWNS DEBUG ===');
             const dropdowns = document.querySelectorAll('.ingredient-select');
+            console.log('Found', dropdowns.length, 'ingredient dropdowns');
+            console.log('Available ingredients to populate:', availableIngredients);
+            console.log('Ingredients count:', availableIngredients.length);
             
-            dropdowns.forEach(dropdown => {
+            dropdowns.forEach((dropdown, index) => {
+                console.log(`Updating dropdown ${index + 1}...`);
                 const currentValue = dropdown.value;
+                console.log('Current value:', currentValue);
                 
                 // Clear and rebuild options
                 dropdown.innerHTML = '<option value="">-- Select Ingredient --</option>';
+                console.log('Cleared dropdown, adding', availableIngredients.length, 'ingredients...');
                 
                 availableIngredients.forEach(ingredient => {
                     const option = document.createElement('option');
                     option.value = ingredient;
                     option.textContent = ingredient;
                     dropdown.appendChild(option);
+                    console.log('Added ingredient option:', ingredient);
                 });
                 
                 // Restore selection if it still exists
                 if (availableIngredients.includes(currentValue)) {
                     dropdown.value = currentValue;
+                    console.log('Restored selection:', currentValue);
                 }
+                
+                console.log('Dropdown', index + 1, 'now has', dropdown.options.length, 'options');
             });
+            console.log('=== END UPDATE INGREDIENT DROPDOWNS DEBUG ===');
         }
         
         // Update recent ingredients display
@@ -2236,6 +2392,7 @@
             const ingredientModal = document.getElementById('ingredient-modal');
             const helpModal = document.getElementById('beverage-type-help-modal');
             const beverageDuplicateModal = document.getElementById('beverage-duplicate-modal');
+            const versionModal = document.getElementById('version-update-modal');
             
             if (event.target === ingredientModal) {
                 closeIngredientModal();
@@ -2246,6 +2403,298 @@
             if (event.target === beverageDuplicateModal) {
                 closeBeverageDuplicateModal();
             }
+            if (event.target === versionModal) {
+                closeVersionModal();
+            }
+        }
+        
+        // === Multi-Size Ingredients Functionality ===
+        let sizeEntryCounter = 0;
+        
+        function toggleMultiSizeSection() {
+            const checkbox = document.getElementById('multipleQuantities');
+            const section = document.getElementById('multiSizeSection');
+            
+            if (checkbox.checked) {
+                section.style.display = 'block';
+                // Add first size entry if none exist
+                if (document.querySelectorAll('.size-entry').length === 0) {
+                    addSizeEntry();
+                }
+            } else {
+                section.style.display = 'none';
+                // Clear all size entries
+                document.getElementById('multiSizeContainer').innerHTML = '';
+                sizeEntryCounter = 0;
+            }
+        }
+        
+        function addSizeEntry() {
+            sizeEntryCounter++;
+            const container = document.getElementById('multiSizeContainer');
+            
+            const sizeEntry = document.createElement('div');
+            sizeEntry.className = 'size-entry';
+            sizeEntry.style.cssText = 'border: 1px solid #ccc; padding: 10px; margin: 10px 0; border-radius: 3px; background: white;';
+            
+            sizeEntry.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <strong>Size Option ${sizeEntryCounter}</strong>
+                    <button type="button" onclick="removeSizeEntry(this)" style="background: #dc3545; color: white; border: none; border-radius: 3px; padding: 5px 10px; cursor: pointer;">
+                        Remove
+                    </button>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                    <div>
+                        <label>Unit Size:</label>
+                        <input type="number" name="multiSize_${sizeEntryCounter}" placeholder="750" min="0" step="any" required style="width: 100%; padding: 5px; border: 1px solid #ccc; border-radius: 3px;">
+                    </div>
+                    <div>
+                        <label>Unit Metric:</label>
+                        <select name="multiMetric_${sizeEntryCounter}" required style="width: 100%; padding: 5px; border: 1px solid #ccc; border-radius: 3px;">
+                            <option value="">-- Select --</option>
+                            <option value="ml">ml</option>
+                            <option value="L">L</option>
+                            <option value="fl oz">fl oz</option>
+                            <option value="oz">oz</option>
+                            <option value="gal">gal</option>
+                            <option value="g">g</option>
+                            <option value="kg">kg</option>
+                            <option value="lb">lb</option>
+                            <option value="each">each</option>
+                            <option value="bottle">bottle</option>
+                            <option value="case">case</option>
+                            <option value="bunch">bunch</option>
+                            <option value="N/A">N/A</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Cost per Unit ($):</label>
+                        <input type="number" name="multiCost_${sizeEntryCounter}" placeholder="12.99" min="0" step="0.01" required style="width: 100%; padding: 5px; border: 1px solid #ccc; border-radius: 3px;">
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(sizeEntry);
+        }
+        
+        function removeSizeEntry(button) {
+            const sizeEntry = button.closest('.size-entry');
+            if (sizeEntry) {
+                sizeEntry.remove();
+            }
+            
+            // If no size entries remain, hide the section
+            if (document.querySelectorAll('.size-entry').length === 0) {
+                document.getElementById('multipleQuantities').checked = false;
+                toggleMultiSizeSection();
+            }
+        }
+        
+        // === Version Management === 
+        
+        /**
+         * Check system version and display status
+         */
+        function checkSystemVersion() {
+            const versionInfo = document.getElementById('version-info');
+            const versionStatus = document.getElementById('version-status');
+            const checkBtn = document.getElementById('check-version-btn');
+            
+            if (versionInfo) {
+                versionInfo.textContent = 'Checking version...';
+            }
+            if (checkBtn) {
+                checkBtn.disabled = true;
+                checkBtn.textContent = 'Checking...';
+            }
+            
+            google.script.run
+                .withSuccessHandler(function(systemStatus) {
+                    displayVersionInfo(systemStatus);
+                    if (checkBtn) {
+                        checkBtn.disabled = false;
+                        checkBtn.textContent = 'Check Version';
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    console.error('Version check failed:', error);
+                    if (versionInfo) {
+                        versionInfo.textContent = 'Version check failed';
+                        versionInfo.style.color = '#dc3545';
+                    }
+                    if (checkBtn) {
+                        checkBtn.disabled = false;
+                        checkBtn.textContent = 'Check Version';
+                    }
+                })
+                .getSystemStatus();
+        }
+        
+        /**
+         * Display version information in the UI
+         */
+        function displayVersionInfo(systemStatus) {
+            const versionInfo = document.getElementById('version-info');
+            const versionStatus = document.getElementById('version-status');
+            
+            if (!versionInfo) return;
+            
+            // Defensive check for null or invalid response
+            if (!systemStatus || typeof systemStatus !== 'object') {
+                console.error('Invalid systemStatus received:', systemStatus);
+                versionInfo.innerHTML = 'App v3.4.0 - Multi-Size & Sync Fix Deployment';
+                versionInfo.style.color = '#dc3545';
+                
+                if (versionStatus) {
+                    versionStatus.innerHTML = 'Database: Error | ❌ Could not check version status';
+                    versionStatus.style.display = 'block';
+                    versionStatus.style.color = '#dc3545';
+                }
+                return;
+            }
+            
+            // Check if application info exists
+            if (!systemStatus.application || !systemStatus.application.version) {
+                console.warn('Missing application info in systemStatus:', systemStatus);
+                versionInfo.innerHTML = 'App v3.4.0 - Multi-Size & Sync Fix Deployment';
+                
+                if (versionStatus) {
+                    versionStatus.innerHTML = 'Database: Unknown | ⚠️ Version check partially failed';
+                    versionStatus.style.display = 'block';
+                    versionStatus.style.color = '#ffc107';
+                }
+                return;
+            }
+            
+            // Display app version info with clearer labeling
+            versionInfo.innerHTML = `App v${systemStatus.application.version} - ${systemStatus.application.name || 'Unknown'}`;
+            
+            if (versionStatus) {
+                // Show both app and spreadsheet versions clearly
+                const spreadsheetVer = systemStatus.spreadsheet.version || 'Unknown';
+                const statusMsg = systemStatus.message || 'No version status available';
+                versionStatus.innerHTML = `Database: ${spreadsheetVer} | ${statusMsg}`;
+                versionStatus.style.display = 'block';
+                
+                // Color code based on status
+                if (systemStatus.spreadsheet && systemStatus.spreadsheet.status) {
+                    switch(systemStatus.spreadsheet.status) {
+                        case 'current':
+                            versionStatus.style.color = '#28a745';
+                            break;
+                        case 'outdated':
+                        case 'legacy':
+                            versionStatus.style.color = '#ffc107';
+                            versionStatus.style.fontWeight = 'bold';
+                            if (systemStatus.canUpdate) {
+                                addUpdateButton(versionStatus);
+                            }
+                            break;
+                        case 'newer':
+                            versionStatus.style.color = '#17a2b8';
+                            break;
+                        case 'error':
+                            versionStatus.style.color = '#dc3545';
+                            break;
+                        default:
+                            versionStatus.style.color = '#6c757d';
+                    }
+                } else {
+                    versionStatus.style.color = '#6c757d';
+                }
+            }
+        }
+        
+        /**
+         * Add update button to version status
+         */
+        function addUpdateButton(container) {
+            const updateBtn = document.createElement('button');
+            updateBtn.textContent = '🔄 Update Now';
+            updateBtn.style.marginLeft = '10px';
+            updateBtn.style.padding = '4px 8px';
+            updateBtn.style.fontSize = '0.7rem';
+            updateBtn.style.backgroundColor = '#ffc107';
+            updateBtn.style.color = '#212529';
+            updateBtn.style.border = 'none';
+            updateBtn.style.borderRadius = '3px';
+            updateBtn.style.cursor = 'pointer';
+            updateBtn.onclick = showUpdateModal;
+            
+            container.appendChild(updateBtn);
+        }
+        
+        /**
+         * Show update confirmation modal
+         */
+        function showUpdateModal() {
+            const modal = document.getElementById('version-update-modal');
+            if (modal) {
+                modal.style.display = 'block';
+            }
+        }
+        
+        /**
+         * Close update modal
+         */
+        function closeVersionModal() {
+            const modal = document.getElementById('version-update-modal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+        
+        /**
+         * Perform spreadsheet update
+         */
+        function performUpdate() {
+            const modal = document.getElementById('version-update-modal');
+            const updateBtn = document.querySelector('.update-confirm-btn');
+            const updateStatus = document.getElementById('update-status');
+            
+            if (updateBtn) {
+                updateBtn.disabled = true;
+                updateBtn.textContent = 'Updating...';
+            }
+            
+            if (updateStatus) {
+                updateStatus.textContent = 'Starting update process...';
+                updateStatus.style.color = '#6c757d';
+            }
+            
+            google.script.run
+                .withSuccessHandler(function(result) {
+                    if (updateStatus) {
+                        if (result.success) {
+                            updateStatus.textContent = '✅ ' + result.message;
+                            updateStatus.style.color = '#28a745';
+                            setTimeout(() => {
+                                closeVersionModal();
+                                checkSystemVersion(); // Refresh version info
+                            }, 2000);
+                        } else {
+                            updateStatus.textContent = '❌ Update failed: ' + result.message;
+                            updateStatus.style.color = '#dc3545';
+                        }
+                    }
+                    if (updateBtn) {
+                        updateBtn.disabled = false;
+                        updateBtn.textContent = 'Update Spreadsheet';
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    console.error('Update failed:', error);
+                    if (updateStatus) {
+                        updateStatus.textContent = '❌ Update failed: ' + error.message;
+                        updateStatus.style.color = '#dc3545';
+                    }
+                    if (updateBtn) {
+                        updateBtn.disabled = false;
+                        updateBtn.textContent = 'Update Spreadsheet';
+                    }
+                })
+                .updateSpreadsheetToLatest();
         }
     </script>
 </body>
