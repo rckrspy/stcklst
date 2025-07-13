@@ -386,26 +386,6 @@
             min-width: 80px;
         }
         
-        .ingredient-min-qty {
-            flex: 1;
-            min-width: 70px;
-            font-size: 0.9em;
-        }
-        
-        .substitution-controls {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-            min-width: 60px;
-        }
-        
-        .substitution-notes {
-            font-size: 0.8em;
-            padding: 2px 4px;
-            border: 1px solid #ddd;
-            border-radius: 3px;
-        }
-        
         .ingredient-unit {
             flex: 1;
             min-width: 80px;
@@ -549,8 +529,7 @@
             
             .ingredient-select,
             .ingredient-amount,
-            .ingredient-unit,
-            .ingredient-min-qty {
+            .ingredient-unit {
                 min-width: auto;
             }
             
@@ -1065,7 +1044,7 @@
                     <select class="ingredient-substitutions" name="substitutions-${ingredientCounter}" 
                             multiple size="3" style="min-width: 150px;"
                             onchange="updateIngredientsData(); saveProgress(); updateRecipePreview();"
-                            title="Select substitution options for this ingredient">
+                            title="Select acceptable substitute ingredients from the same category">
                         <option value="" disabled>Select substitutions...</option>
                     </select>
                     <input type="number" class="ingredient-amount" name="amount-${ingredientCounter}" 
@@ -1083,25 +1062,6 @@
                         <option value="splash" ${ingredient && ingredient.unit === 'splash' ? 'selected' : ''}>splash</option>
                         <option value="each" ${ingredient && ingredient.unit === 'each' ? 'selected' : ''}>each</option>
                     </select>
-                    <input type="text" class="ingredient-min-qty" name="minqty-${ingredientCounter}" 
-                           placeholder="Min qty" 
-                           value="${ingredient ? ingredient.minQuantity || '' : ''}"
-                           onchange="updateIngredientsData(); saveProgress(); updateRecipePreview();"
-                           title="Minimum quantity per service (e.g., 1 oz, 2 dashes)">
-                    <div class="substitution-controls">
-                        <label class="checkbox-label">
-                            <input type="checkbox" class="substitution-checkbox" name="sub-allowed-${ingredientCounter}" 
-                                   ${ingredient && ingredient.substitutionAllowed ? 'checked' : ''}
-                                   onchange="toggleSubstitutionNotes(this); updateIngredientsData(); saveProgress(); updateRecipePreview();">
-                            <span class="checkbox-text">Sub</span>
-                        </label>
-                        <input type="text" class="substitution-notes" name="sub-notes-${ingredientCounter}" 
-                               placeholder="Notes" 
-                               value="${ingredient ? ingredient.substitutionNotes || '' : ''}"
-                               style="display: ${ingredient && ingredient.substitutionAllowed ? 'block' : 'none'};"
-                               onchange="updateIngredientsData(); saveProgress(); updateRecipePreview();"
-                               title="Substitution notes or instructions">
-                    </div>
                     <div class="menu-indicator">
                         <label class="checkbox-label">
                             <input type="checkbox" class="menu-checkbox" name="menu-${ingredientCounter}" 
@@ -1180,21 +1140,6 @@
         }
         
         /**
-         * Toggle substitution notes field visibility
-         */
-        function toggleSubstitutionNotes(checkbox) {
-            const row = checkbox.closest('.ingredient-row');
-            const notesField = row.querySelector('.substitution-notes');
-            
-            if (notesField) {
-                notesField.style.display = checkbox.checked ? 'block' : 'none';
-                if (!checkbox.checked) {
-                    notesField.value = ''; // Clear notes when unchecked
-                }
-            }
-        }
-        
-        /**
          * Remove an ingredient row
          */
         function removeIngredientRow(rowId) {
@@ -1229,14 +1174,12 @@
             const select = row.querySelector('.ingredient-select');
             const brand = row.querySelector('.ingredient-brand');
             const amount = row.querySelector('.ingredient-amount');
-            const minQty = row.querySelector('.ingredient-min-qty');
-            const subNotes = row.querySelector('.substitution-notes');
+            const substitutions = row.querySelector('.ingredient-substitutions');
             
             return (select && select.value) || 
                    (brand && brand.value.trim()) || 
                    (amount && amount.value) ||
-                   (minQty && minQty.value.trim()) ||
-                   (subNotes && subNotes.value.trim());
+                   (substitutions && substitutions.selectedOptions.length > 0);
         }
         
         /**
@@ -1251,9 +1194,6 @@
                 const substitutionsSelect = row.querySelector('.ingredient-substitutions');
                 const amount = row.querySelector('.ingredient-amount');
                 const unit = row.querySelector('.ingredient-unit');
-                const minQty = row.querySelector('.ingredient-min-qty');
-                const subCheckbox = row.querySelector('.substitution-checkbox');
-                const subNotes = row.querySelector('.substitution-notes');
                 const menuCheckbox = row.querySelector('.menu-checkbox');
                 
                 if (select.value) { // Only include rows with selected ingredients
@@ -1267,9 +1207,6 @@
                         substitutions: substitutions,
                         amount: parseFloat(amount.value) || 0,
                         unit: unit.value,
-                        minQuantity: minQty ? minQty.value.trim() : '',
-                        substitutionAllowed: subCheckbox ? subCheckbox.checked : false,
-                        substitutionNotes: subNotes ? subNotes.value.trim() : '',
                         showOnMenu: menuCheckbox ? menuCheckbox.checked : true,
                         order: index + 1
                     });

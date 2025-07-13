@@ -222,11 +222,6 @@
         </div>
       </div>
 
-      <div class="form-group">
-        <label for="minQuantity">Minimum Quantity per Service:</label>
-        <input type="text" id="minQuantity" name="minQuantity" maxlength="50" placeholder="e.g., 1 oz, 2 dashes, 1 slice">
-        <small>Minimum quantity advisable per service instance (e.g., "1 oz", "2 dashes", "1 garnish").</small>
-      </div>
 
       <!-- Unit Size / Metric -->
       <div style="display: flex; gap: 20px; flex-wrap: wrap; border: 1px solid #eee; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
@@ -420,7 +415,6 @@
       formData.ingredientName = form.ingredientName.value.trim();
       formData.category = form.category.value;
       formData.labelBrand = form.labelBrand.value.trim();
-      formData.minQuantity = form.minQuantity.value.trim();
 
       // Handle Unit Size (Radio or Other)
       let unitSizeValue = document.querySelector('input[name="unitSize"]:checked')?.value;
@@ -589,7 +583,7 @@
 
       // *** UPDATE dataFields ARRAY TO INCLUDE isAvailable175L ***
       const dataFields = [
-        "ingredientName", "category", "labelBrand", "minQuantity",
+        "ingredientName", "category", "labelBrand",
         "unitSize", "unitMetric", "costPerUnit", "source",
         "alcoholic", "bulk", "isAvailable175L", // Added new field
         "allergen", "substitute", "storage", "shelfLife"

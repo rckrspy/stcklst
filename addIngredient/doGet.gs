@@ -41,7 +41,7 @@ function saveIngredientData(formData, rowIndexToReplace = null) {
         "timestamp", "userEmail", "ingredientName", "category", "subcategory", 
         "labelBrand", "countryOfOrigin", "spiritsType", "spiritsStyle", 
         "abv", "tasteProfile", "bodyStyle", "sku", "sizeVolume", 
-        "description", "storageRequirements", "shelfLifeDays", "minQuantity", 
+        "description", "storageRequirements", "shelfLifeDays", 
         "unitSize", "unitMetric", "costPerUnit", "supplierID", "source",
         "alcoholic", "bulk", "isAvailable175L", "allergen", "substitute"
     ];
@@ -74,7 +74,6 @@ function saveIngredientData(formData, rowIndexToReplace = null) {
     const sku = formData.sku ? formData.sku.trim() : '';
     const sizeVolume = formData.sizeVolume ? formData.sizeVolume.trim() : '';
     const description = formData.description ? formData.description.trim() : '';
-    const minQuantity = formData.minQuantity ? formData.minQuantity.trim() : '';
     const source = formData.source ? formData.source.trim() : '';
     const allergen = formData.allergen ? formData.allergen.trim() : '';
     const substitute = formData.substitute ? formData.substitute.trim() : '';
@@ -117,7 +116,6 @@ function saveIngredientData(formData, rowIndexToReplace = null) {
     if (sku.length > 50) throw new Error("SKU exceeds maximum length (50).");
     if (sizeVolume.length > 50) throw new Error("Size/Volume exceeds maximum length (50).");
     if (description.length > 1000) throw new Error("Description exceeds maximum length (1000).");
-    if (minQuantity.length > 50) throw new Error("Minimum Quantity exceeds maximum length (50).");
     if (source.length > 150) throw new Error("Source exceeds maximum length (150).");
     if (allergen.length > 255) throw new Error("Allergen field exceeds maximum length (255).");
     if (substitute.length > 255) throw new Error("Substitute field exceeds maximum length (255).");
@@ -153,7 +151,6 @@ function saveIngredientData(formData, rowIndexToReplace = null) {
         description || null,                          // description
         formData.storageRequirements || null,         // storageRequirements
         shelfLifeDays ? parseInt(shelfLifeDays) : null, // shelfLifeDays
-        minQuantity || null,                          // minQuantity
         unitSize,                                     // unitSize
         formData.unitMetric || null,                  // unitMetric
         costPerUnit ? parseFloat(costPerUnit) : null, // costPerUnit
@@ -425,7 +422,6 @@ function processMultiSizeIngredient(formData, sheet, headers) {
         formData.description || null,                  // description
         formData.storageRequirements || null,          // storageRequirements
         formData.shelfLifeDays ? parseInt(formData.shelfLifeDays) : null, // shelfLifeDays
-        formData.minQuantity || null,                  // minQuantity
         sizeEntry.unitSize,                            // unitSize
         sizeEntry.unitMetric,                          // unitMetric
         parseFloat(sizeEntry.costPerUnit),             // costPerUnit

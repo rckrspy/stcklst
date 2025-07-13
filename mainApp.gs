@@ -580,7 +580,7 @@ function saveIngredientDataInternal(formData) {
     "timestamp", "userEmail", "ingredientName", "category", "subcategory", 
     "labelBrand", "countryOfOrigin", "spiritsType", "spiritsStyle", 
     "abv", "tasteProfile", "bodyStyle", "sku", "sizeVolume", 
-    "description", "storageRequirements", "shelfLifeDays", "minQuantity", 
+    "description", "storageRequirements", "shelfLifeDays", 
     "unitSize", "unitMetric", "costPerUnit", "supplierID", "source",
     "alcoholic", "bulk", "isAvailable175L", "allergen", "substitute"
   ];
@@ -618,7 +618,6 @@ function saveIngredientDataInternal(formData) {
       formData.description || '',
       formData.storageRequirements || 'Cool, dry place',
       formData.shelfLifeDays || 365,
-      formData.minQuantity || '',
       formData.unitSize || '',
       formData.unitMetric || 'ml',
       formData.costPerUnit ? parseFloat(formData.costPerUnit) : null,
