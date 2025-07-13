@@ -268,6 +268,21 @@ function saveBeverageData(beverageData) {
       recipeIngredientsSheet.setFrozenRows(1);
     }
     
+    // Check for duplicate recipe names (unless forcing add)
+    if (!beverageData.forceAdd && !beverageData.replaceExisting) {
+      const existingRecipe = findRecipeId(beverageData.beverageName, ss);
+      if (existingRecipe) {
+        Logger.log('Duplicate recipe found: ' + JSON.stringify(existingRecipe));
+        return {
+          success: false,
+          message: 'Recipe with this name already exists',
+          duplicate: true,
+          existingData: existingRecipe,
+          newData: beverageData
+        };
+      }
+    }
+    
     // Generate recipe ID
     const recipeId = 'RCP_' + new Date().getTime();
     const now = new Date();
@@ -299,8 +314,21 @@ function saveBeverageData(beverageData) {
       true // active
     ];
     
-    // Add recipe to sheet
-    recipesSheet.appendRow(recipeRow);
+    // Handle recipe addition - either replace existing or add new
+    if (beverageData.replaceExisting && beverageData.existingRowIndex) {
+      // Replace existing recipe
+      Logger.log('Replacing existing recipe at row: ' + beverageData.existingRowIndex);
+      recipesSheet.getRange(beverageData.existingRowIndex, 1, 1, recipeRow.length).setValues([recipeRow]);
+      
+      // Clean up old ingredient relationships for this recipe
+      const existingRecipe = findRecipeId(beverageData.beverageName, ss);
+      if (existingRecipe && existingRecipe['Recipe_ID']) {
+        deleteRecipeIngredients(existingRecipe['Recipe_ID'], recipeIngredientsSheet);
+      }
+    } else {
+      // Add new recipe
+      recipesSheet.appendRow(recipeRow);
+    }
     
     // Add ingredient relationships
     beverageData.ingredients.forEach((ingredient, index) => {
@@ -378,6 +406,92 @@ function findIngredientId(ingredientName, spreadsheet) {
   } catch (error) {
     Logger.log('Error finding ingredient ID: ' + error.toString());
     return null;
+  }
+}
+
+/**
+ * Find existing recipe by name (case-insensitive)
+ * @param {string} recipeName - The name of the recipe to search for
+ * @param {SpreadsheetApp.Spreadsheet} spreadsheet - The spreadsheet to search in
+ * @return {object|null} - Recipe data object with rowIndex if found, null otherwise
+ */
+function findRecipeId(recipeName, spreadsheet) {
+  try {
+    const recipesSheet = spreadsheet.getSheetByName('Recipes');
+    
+    if (!recipesSheet) return null;
+    
+    const data = recipesSheet.getDataRange().getValues();
+    if (data.length < 2) return null;
+    
+    const headers = data[0];
+    const nameIndex = headers.findIndex(h => 
+      String(h).toLowerCase().includes('name') || 
+      String(h).toLowerCase().includes('recipe_name')
+    );
+    
+    if (nameIndex === -1) return null;
+    
+    const searchName = recipeName.toLowerCase().trim();
+    
+    for (let i = 1; i < data.length; i++) {
+      const existingName = String(data[i][nameIndex]).toLowerCase().trim();
+      if (existingName === searchName) {
+        // Build recipe data object
+        const recipeData = {};
+        headers.forEach((header, index) => {
+          recipeData[String(header).trim()] = data[i][index];
+        });
+        recipeData.rowIndex = i + 1; // 1-based row number
+        return recipeData;
+      }
+    }
+    
+    return null;
+    
+  } catch (error) {
+    Logger.log('Error finding recipe ID: ' + error.toString());
+    return null;
+  }
+}
+
+/**
+ * Delete ingredient relationships for a specific recipe
+ * @param {string} recipeId - The recipe ID to delete relationships for
+ * @param {SpreadsheetApp.Sheet} recipeIngredientsSheet - The recipe ingredients sheet
+ */
+function deleteRecipeIngredients(recipeId, recipeIngredientsSheet) {
+  try {
+    if (!recipeIngredientsSheet || !recipeId) return;
+    
+    const data = recipeIngredientsSheet.getDataRange().getValues();
+    if (data.length < 2) return;
+    
+    const headers = data[0];
+    const recipeIdIndex = headers.findIndex(h => 
+      String(h).toLowerCase().includes('recipe_id') || 
+      String(h).toLowerCase().includes('recipeid')
+    );
+    
+    if (recipeIdIndex === -1) return;
+    
+    // Find rows to delete (working backwards to maintain row indices)
+    const rowsToDelete = [];
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][recipeIdIndex]).trim() === String(recipeId).trim()) {
+        rowsToDelete.push(i + 1); // 1-based row number
+      }
+    }
+    
+    // Delete rows (from bottom to top to maintain indices)
+    rowsToDelete.reverse().forEach(rowNum => {
+      recipeIngredientsSheet.deleteRow(rowNum);
+    });
+    
+    Logger.log(`Deleted ${rowsToDelete.length} ingredient relationships for recipe: ${recipeId}`);
+    
+  } catch (error) {
+    Logger.log('Error deleting recipe ingredients: ' + error.toString());
   }
 }
 

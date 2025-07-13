@@ -816,10 +816,17 @@
                         <select id="unitMetric" name="unitMetric">
                             <option value="ml">ml</option>
                             <option value="L">L</option>
+                            <option value="fl oz">fl oz</option>
                             <option value="oz">oz</option>
-                            <option value="each">each</option>
-                            <option value="kg">kg</option>
+                            <option value="gal">gal</option>
                             <option value="g">g</option>
+                            <option value="kg">kg</option>
+                            <option value="lb">lb</option>
+                            <option value="each">each</option>
+                            <option value="bottle">bottle</option>
+                            <option value="case">case</option>
+                            <option value="bunch">bunch</option>
+                            <option value="N/A">N/A</option>
                         </select>
                     </div>
                     
@@ -926,6 +933,42 @@
                         <li><strong>Energy Drinks</strong> - Caffeinated energy beverages</li>
                         <li><strong>Other Non-Alcoholic</strong> - Any other non-alcoholic beverages</li>
                     </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Beverage Duplicate Modal -->
+    <div id="beverage-duplicate-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Duplicate Recipe Found</h3>
+                <button type="button" class="close-btn" onclick="closeBeverageDuplicateModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>A recipe with the name "<strong id="duplicate-recipe-name"></strong>" already exists. Please review the details and choose how to proceed:</p>
+                
+                <div style="display: flex; gap: 20px; margin: 20px 0;">
+                    <div style="flex: 1; padding: 15px; border: 1px solid #ddd; border-radius: 5px;">
+                        <h4 style="color: #666; margin-top: 0;">Existing Recipe</h4>
+                        <div id="existing-recipe-details"></div>
+                    </div>
+                    <div style="flex: 1; padding: 15px; border: 1px solid #ddd; border-radius: 5px;">
+                        <h4 style="color: #0066cc; margin-top: 0;">Your New Recipe</h4>
+                        <div id="new-recipe-details"></div>
+                    </div>
+                </div>
+                
+                <div class="modal-buttons" style="text-align: center; margin-top: 20px;">
+                    <button type="button" class="btn btn-primary" onclick="replaceBeverageRecipe()" style="margin: 0 10px;">
+                        Replace Existing Recipe
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="addNewBeverageAnyway()" style="margin: 0 10px;">
+                        Add as New Recipe
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeBeverageDuplicateModal()" style="margin: 0 10px;">
+                        Cancel
+                    </button>
                 </div>
             </div>
         </div>
@@ -1537,6 +1580,127 @@
             document.getElementById('beverage-type-help-modal').style.display = 'none';
         }
         
+        // Beverage duplicate modal functions
+        let duplicateRecipeData = null;
+        let newRecipeData = null;
+        
+        function showBeverageDuplicateModal(existingData, newData) {
+            duplicateRecipeData = existingData;
+            newRecipeData = newData;
+            
+            document.getElementById('duplicate-recipe-name').textContent = newData.beverageName;
+            
+            // Format existing recipe details
+            const existingDetails = document.getElementById('existing-recipe-details');
+            existingDetails.innerHTML = `
+                <p><strong>Type:</strong> ${existingData['Category'] || 'N/A'}</p>
+                <p><strong>Glass:</strong> ${existingData['Glass_Type'] || 'N/A'}</p>
+                <p><strong>Ice:</strong> ${existingData['Ice_Type'] || 'N/A'}</p>
+                <p><strong>Service:</strong> ${existingData['Service_Method'] || 'N/A'}</p>
+                <p><strong>Rating:</strong> ${existingData['Popularity_Rating'] || 'N/A'}</p>
+                <p><strong>Created:</strong> ${existingData['Created_Date'] ? new Date(existingData['Created_Date']).toLocaleDateString() : 'N/A'}</p>
+            `;
+            
+            // Format new recipe details
+            const newDetails = document.getElementById('new-recipe-details');
+            newDetails.innerHTML = `
+                <p><strong>Type:</strong> ${newData.beverageType || 'N/A'}</p>
+                <p><strong>Glass:</strong> ${newData.glassType || 'N/A'}</p>
+                <p><strong>Ice:</strong> ${newData.iceType || 'N/A'}</p>
+                <p><strong>Service:</strong> ${newData.serviceMethod || 'N/A'}</p>
+                <p><strong>Rating:</strong> ${newData.popularityRating || 'N/A'}</p>
+                <p><strong>Ingredients:</strong> ${newData.ingredients ? newData.ingredients.length : 0} items</p>
+            `;
+            
+            document.getElementById('beverage-duplicate-modal').style.display = 'block';
+        }
+        
+        function closeBeverageDuplicateModal() {
+            document.getElementById('beverage-duplicate-modal').style.display = 'none';
+            duplicateRecipeData = null;
+            newRecipeData = null;
+            
+            // Re-enable form submission
+            const submitBtn = document.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                document.getElementById('submit-text').style.display = 'inline';
+                document.getElementById('submit-loading').style.display = 'none';
+            }
+        }
+        
+        function replaceBeverageRecipe() {
+            if (!duplicateRecipeData || !newRecipeData) {
+                console.error('Missing duplicate recipe data');
+                return;
+            }
+            
+            // Add replace flag to new recipe data
+            newRecipeData.replaceExisting = true;
+            newRecipeData.existingRowIndex = duplicateRecipeData.rowIndex;
+            
+            // Submit with replace flag
+            submitBeverageData(newRecipeData, true);
+        }
+        
+        function addNewBeverageAnyway() {
+            if (!newRecipeData) {
+                console.error('Missing new recipe data');
+                return;
+            }
+            
+            // Add override flag to new recipe data
+            newRecipeData.forceAdd = true;
+            
+            // Submit with force add flag
+            submitBeverageData(newRecipeData, true);
+        }
+        
+        function submitBeverageData(beverageData, isRetry = false) {
+            const submitText = document.getElementById('submit-text');
+            const submitLoading = document.getElementById('submit-loading');
+            
+            if (!isRetry) {
+                submitText.style.display = 'none';
+                submitLoading.style.display = 'inline-block';
+            }
+            
+            google.script.run
+                .withSuccessHandler(function(result) {
+                    console.log('Server response:', result);
+                    
+                    // Check if this is a duplicate response
+                    if (result && !result.success && result.duplicate && result.existingData) {
+                        showBeverageDuplicateModal(result.existingData, result.newData || beverageData);
+                        return;
+                    }
+                    
+                    // Success case
+                    if (result && result.success) {
+                        showMessage('main-message', result.message || 'Beverage created successfully!', 'success');
+                        clearForm();
+                        clearProgress();
+                        closeBeverageDuplicateModal();
+                    } else {
+                        showMessage('main-message', result.message || 'Unknown error occurred.', 'error');
+                    }
+                    
+                    submitText.style.display = 'inline';
+                    submitLoading.style.display = 'none';
+                })
+                .withFailureHandler(function(error) {
+                    console.error('Submission error:', error);
+                    showMessage('main-message', 'Error creating beverage: ' + error.message, 'error');
+                    
+                    submitText.style.display = 'inline';
+                    submitLoading.style.display = 'none';
+                    
+                    // Close duplicate modal if open
+                    closeBeverageDuplicateModal();
+                })
+                .saveBeverageData(beverageData);
+        }
+        
         // Message functions
         function showMessage(elementId, message, type = 'info') {
             const messageElement = document.getElementById(elementId);
@@ -1610,22 +1774,7 @@
             console.log('Submitting beverage data:', beverageData);
             
             // Call server function to save beverage
-            google.script.run
-                .withSuccessHandler(function(result) {
-                    showMessage('main-message', 'Beverage created successfully!', 'success');
-                    clearForm();
-                    clearProgress();
-                    
-                    submitText.style.display = 'inline';
-                    submitLoading.style.display = 'none';
-                })
-                .withFailureHandler(function(error) {
-                    showMessage('main-message', 'Error creating beverage: ' + error.message, 'error');
-                    
-                    submitText.style.display = 'inline';
-                    submitLoading.style.display = 'none';
-                })
-                .saveBeverageData(beverageData);
+            submitBeverageData(beverageData, false);
         });
         
         document.getElementById('ingredient-form').addEventListener('submit', function(e) {
@@ -1802,12 +1951,16 @@
         window.onclick = function(event) {
             const ingredientModal = document.getElementById('ingredient-modal');
             const helpModal = document.getElementById('beverage-type-help-modal');
+            const beverageDuplicateModal = document.getElementById('beverage-duplicate-modal');
             
             if (event.target === ingredientModal) {
                 closeIngredientModal();
             }
             if (event.target === helpModal) {
                 closeBeverageTypeHelp();
+            }
+            if (event.target === beverageDuplicateModal) {
+                closeBeverageDuplicateModal();
             }
         }
     </script>

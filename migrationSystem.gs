@@ -488,7 +488,7 @@ function setupEnhancedIngredientsValidation(sheet) {
   
   // Unit Metric validation
   const unitMetricRule = SpreadsheetApp.newDataValidation()
-    .requireValueInList(['ml', 'L', 'oz', 'fl oz', 'each', 'kg', 'g', 'lb', 'gallon', 'case'])
+    .requireValueInList(['ml', 'L', 'fl oz', 'oz', 'gal', 'g', 'kg', 'lb', 'each', 'bottle', 'case', 'bunch', 'N/A'])
     .setAllowInvalid(false)
     .setHelpText('Select a valid unit metric')
     .build();
