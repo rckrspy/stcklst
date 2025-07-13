@@ -1959,6 +1959,71 @@
             updateRecentIngredients();
         });
         
+        // Listen for ingredient added messages from iframe
+        window.addEventListener('message', function(event) {
+            if (event.data === 'ingredientAdded') {
+                console.log('Received ingredientAdded message, refreshing ingredients...');
+                refreshIngredientsFromDatabase();
+            }
+        });
+        
+        /**
+         * Refresh ingredients from database after new ingredient added
+         */
+        function refreshIngredientsFromDatabase() {
+            // Show loading feedback
+            showMessage('main-message', 'Refreshing ingredients...', 'info');
+            
+            google.script.run
+                .withSuccessHandler(function(updatedData) {
+                    // Update global ingredient arrays
+                    availableIngredients = updatedData.ingredientNames || [];
+                    baseSpirits = updatedData.baseSpirits || [];
+                    
+                    // Update all ingredient dropdowns
+                    updateAllIngredientDropdowns();
+                    
+                    // Show success feedback
+                    showMessage('main-message', `Ingredients updated! ${availableIngredients.length} available.`, 'success');
+                    
+                    console.log(`Ingredients refreshed: ${availableIngredients.length} total`);
+                })
+                .withFailureHandler(function(error) {
+                    console.error('Failed to refresh ingredients:', error);
+                    showMessage('main-message', 'Failed to refresh ingredients. Please refresh the page.', 'error');
+                })
+                .getDataForBeverageForm();
+        }
+        
+        /**
+         * Update all ingredient dropdowns with latest ingredient list
+         */
+        function updateAllIngredientDropdowns() {
+            const allIngredientSelects = document.querySelectorAll('.ingredient-select');
+            
+            allIngredientSelects.forEach(select => {
+                const currentValue = select.value;
+                
+                // Clear and rebuild options
+                select.innerHTML = '<option value="">-- Select Ingredient --</option>';
+                
+                availableIngredients.forEach(ingredient => {
+                    const option = document.createElement('option');
+                    option.value = ingredient;
+                    option.textContent = ingredient;
+                    if (ingredient === currentValue) {
+                        option.selected = true;
+                    }
+                    select.appendChild(option);
+                });
+                
+                // Update substitutions if this row has an ingredient selected
+                if (currentValue && availableIngredients.includes(currentValue)) {
+                    updateSubstitutions(select);
+                }
+            });
+        }
+        
         // Clear form function
         function clearForm() {
             // Check if form has any data

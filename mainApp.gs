@@ -496,6 +496,72 @@ function deleteRecipeIngredients(recipeId, recipeIngredientsSheet) {
 }
 
 /**
+ * Get ingredient data for beverage forms (global function for client-side calls)
+ */
+function getDataForBeverageForm() {
+  const ingredientSsId = "1-M1E2PVtAmGYj4SviOqo97RXxfhVEEtnxWROa3lHU3c";
+  const ingredientSheetName = "database";
+  let ingredientNames = [];
+  let baseSpirits = [];
+
+  try {
+    const ss = SpreadsheetApp.openById(ingredientSsId);
+    const sheet = ss.getSheetByName(ingredientSheetName);
+
+    if (!sheet) {
+      Logger.log(`Ingredient sheet "${ingredientSheetName}" not found.`);
+      return { ingredientNames, baseSpirits };
+    }
+
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) {
+      Logger.log("No data rows in ingredient sheet.");
+      return { ingredientNames, baseSpirits };
+    }
+
+    const dataRange = sheet.getRange(1, 1, lastRow, sheet.getLastColumn());
+    const data = dataRange.getValues();
+    const headers = data[0].map(h => h.toString().trim().toLowerCase());
+
+    const nameColIdx = headers.indexOf("ingredientname");
+    const categoryColIdx = headers.indexOf("category");
+
+    if (nameColIdx === -1) {
+      Logger.log("Header 'ingredientName' not found in ingredient sheet.");
+      return { ingredientNames, baseSpirits };
+    }
+
+    // Start from row 1 to skip header
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      const name = row[nameColIdx] ? row[nameColIdx].toString().trim() : null;
+      if (name) {
+        ingredientNames.push(name);
+        // Check category if column exists
+        if (categoryColIdx !== -1) {
+          const category = row[categoryColIdx] ? row[categoryColIdx].toString().trim().toLowerCase() : '';
+          if (category === 'spirit') {
+            baseSpirits.push(name);
+          }
+        }
+      }
+    }
+
+    // Deduplicate and sort
+    ingredientNames = [...new Set(ingredientNames)].sort();
+    baseSpirits = [...new Set(baseSpirits)].sort();
+
+    Logger.log(`Fetched ${ingredientNames.length} unique ingredient names.`);
+    Logger.log(`Fetched ${baseSpirits.length} unique base spirits.`);
+
+  } catch (error) {
+    Logger.log(`Error fetching ingredient data: ${error.message}`);
+  }
+
+  return { ingredientNames, baseSpirits };
+}
+
+/**
  * Save ingredient data from the modal within the unified interface
  * This is a simplified version that calls the existing saveIngredientData function
  */
