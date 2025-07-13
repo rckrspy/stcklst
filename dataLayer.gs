@@ -484,7 +484,12 @@ function determineSubcategory(ingredientName, category = '') {
   
   // Garnishes & Accessories subcategories
   if (cat.includes('garnish') || cat.includes('accessor')) {
-    if (name.includes('slice') || name.includes('wedge') || name.includes('wheel')) return 'Citrus Slices / Wedges';
+    if (name.includes('dehydrated') || name.includes('dried')) return 'Dehydrated';
+    if (name.includes('wheel') && !name.includes('half') && !name.includes('quarter')) return 'Citrus Wheel';
+    if (name.includes('half wheel')) return 'Citrus Half Wheel';
+    if (name.includes('quarter wheel')) return 'Citrus Quarter Wheel';
+    if (name.includes('wedge')) return 'Citrus Wedge';
+    if (name.includes('peel') || name.includes('zest') || name.includes('twist')) return 'Citrus Peel';
     if (name.includes('olive')) return 'Olives';
     if (name.includes('cherry') || name.includes('maraschino')) return 'Cherries';
     if (name.includes('pick')) return 'Cocktail Picks';

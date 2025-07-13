@@ -261,7 +261,7 @@ function saveBeverageData(beverageData) {
       recipeIngredientsSheet = ss.insertSheet('Recipe_Ingredients');
       const relationshipHeaders = [
         'Relationship_ID', 'Recipe_ID', 'Ingredient_ID', 'Quantity', 'Unit',
-        'Preferred_Brand', 'Preparation_Method', 'Substitution_Allowed', 'Garnish_Flag',
+        'Substitutions', 'Preparation_Method', 'Substitution_Allowed', 'Garnish_Flag',
         'Critical_Ingredient', 'Cost_Contribution', 'Order_Sequence', 'Show_On_Menu'
       ];
       recipeIngredientsSheet.getRange(1, 1, 1, relationshipHeaders.length).setValues([relationshipHeaders]);
@@ -343,7 +343,7 @@ function saveBeverageData(beverageData) {
         ingredientId,
         ingredient.amount,
         ingredient.unit,
-        ingredient.preferredBrand || '',
+        ingredient.substitutions ? ingredient.substitutions.join(',') : '',
         '', // preparation method
         false, // substitution allowed
         false, // garnish flag

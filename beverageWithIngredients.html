@@ -386,6 +386,26 @@
             min-width: 80px;
         }
         
+        .ingredient-min-qty {
+            flex: 1;
+            min-width: 70px;
+            font-size: 0.9em;
+        }
+        
+        .substitution-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 60px;
+        }
+        
+        .substitution-notes {
+            font-size: 0.8em;
+            padding: 2px 4px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+        
         .ingredient-unit {
             flex: 1;
             min-width: 80px;
@@ -529,7 +549,8 @@
             
             .ingredient-select,
             .ingredient-amount,
-            .ingredient-unit {
+            .ingredient-unit,
+            .ingredient-min-qty {
                 min-width: auto;
             }
             
@@ -1035,16 +1056,18 @@
                 <div class="drag-handle" title="Drag to reorder">⋮⋮</div>
                 <div class="ingredient-row-content">
                     <select class="ingredient-select" name="ingredient-${ingredientCounter}" 
-                            onchange="updateIngredientsData(); saveProgress(); updateRecipePreview();">
+                            onchange="updateSubstitutions(this); updateIngredientsData(); saveProgress(); updateRecipePreview();">
                         <option value="">-- Select Ingredient --</option>
                         ${(availableIngredients || []).map(ing => 
                             `<option value="${ing}" ${ingredient && ingredient.name === ing ? 'selected' : ''}>${ing}</option>`
                         ).join('')}
                     </select>
-                    <input type="text" class="ingredient-brand" name="brand-${ingredientCounter}" 
-                           placeholder="Preferred Brand" 
-                           value="${ingredient ? ingredient.preferredBrand || '' : ''}"
-                           onchange="updateIngredientsData(); saveProgress(); updateRecipePreview();">
+                    <select class="ingredient-substitutions" name="substitutions-${ingredientCounter}" 
+                            multiple size="3" style="min-width: 150px;"
+                            onchange="updateIngredientsData(); saveProgress(); updateRecipePreview();"
+                            title="Select substitution options for this ingredient">
+                        <option value="" disabled>Select substitutions...</option>
+                    </select>
                     <input type="number" class="ingredient-amount" name="amount-${ingredientCounter}" 
                            placeholder="Amount" step="0.0625" min="0" 
                            value="${ingredient ? ingredient.amount || '' : ''}"
@@ -1060,6 +1083,25 @@
                         <option value="splash" ${ingredient && ingredient.unit === 'splash' ? 'selected' : ''}>splash</option>
                         <option value="each" ${ingredient && ingredient.unit === 'each' ? 'selected' : ''}>each</option>
                     </select>
+                    <input type="text" class="ingredient-min-qty" name="minqty-${ingredientCounter}" 
+                           placeholder="Min qty" 
+                           value="${ingredient ? ingredient.minQuantity || '' : ''}"
+                           onchange="updateIngredientsData(); saveProgress(); updateRecipePreview();"
+                           title="Minimum quantity per service (e.g., 1 oz, 2 dashes)">
+                    <div class="substitution-controls">
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="substitution-checkbox" name="sub-allowed-${ingredientCounter}" 
+                                   ${ingredient && ingredient.substitutionAllowed ? 'checked' : ''}
+                                   onchange="toggleSubstitutionNotes(this); updateIngredientsData(); saveProgress(); updateRecipePreview();">
+                            <span class="checkbox-text">Sub</span>
+                        </label>
+                        <input type="text" class="substitution-notes" name="sub-notes-${ingredientCounter}" 
+                               placeholder="Notes" 
+                               value="${ingredient ? ingredient.substitutionNotes || '' : ''}"
+                               style="display: ${ingredient && ingredient.substitutionAllowed ? 'block' : 'none'};"
+                               onchange="updateIngredientsData(); saveProgress(); updateRecipePreview();"
+                               title="Substitution notes or instructions">
+                    </div>
                     <div class="menu-indicator">
                         <label class="checkbox-label">
                             <input type="checkbox" class="menu-checkbox" name="menu-${ingredientCounter}" 
@@ -1083,6 +1125,73 @@
             
             // Update ingredients data
             updateIngredientsData();
+        }
+        
+        /**
+         * Update substitution options based on selected ingredient
+         */
+        function updateSubstitutions(selectElement) {
+            const selectedIngredient = selectElement.value;
+            const row = selectElement.closest('.ingredient-row');
+            const substitutionsSelect = row.querySelector('.ingredient-substitutions');
+            
+            if (!substitutionsSelect || !selectedIngredient) {
+                if (substitutionsSelect) {
+                    substitutionsSelect.innerHTML = '<option value="" disabled>Select substitutions...</option>';
+                }
+                return;
+            }
+            
+            // Get category of selected ingredient (simplified approach)
+            const selectedCategory = getIngredientCategory(selectedIngredient);
+            
+            // Filter available ingredients to same category, excluding selected ingredient
+            const substitutionOptions = (availableIngredients || [])
+                .filter(ing => ing !== selectedIngredient && getIngredientCategory(ing) === selectedCategory)
+                .sort();
+            
+            // Update substitutions dropdown
+            substitutionsSelect.innerHTML = '<option value="" disabled>Select substitutions...</option>' +
+                substitutionOptions.map(ing => 
+                    `<option value="${ing}">${ing}</option>`
+                ).join('');
+        }
+        
+        /**
+         * Get ingredient category (simplified - based on common naming patterns)
+         */
+        function getIngredientCategory(ingredientName) {
+            const name = ingredientName.toLowerCase();
+            
+            // Simplified categorization logic
+            if (name.includes('vodka')) return 'Vodka';
+            if (name.includes('gin')) return 'Gin';
+            if (name.includes('rum')) return 'Rum';
+            if (name.includes('whiskey') || name.includes('whisky') || name.includes('bourbon') || name.includes('scotch')) return 'Whiskey';
+            if (name.includes('tequila')) return 'Tequila';
+            if (name.includes('brandy') || name.includes('cognac')) return 'Brandy';
+            if (name.includes('liqueur') || name.includes('cordial') || name.includes('schnapps')) return 'Liqueur';
+            if (name.includes('vermouth') || name.includes('bitter')) return 'Mixer';
+            if (name.includes('juice') || name.includes('syrup') || name.includes('soda')) return 'Mixer';
+            if (name.includes('wine')) return 'Wine';
+            if (name.includes('beer')) return 'Beer';
+            
+            return 'Other';
+        }
+        
+        /**
+         * Toggle substitution notes field visibility
+         */
+        function toggleSubstitutionNotes(checkbox) {
+            const row = checkbox.closest('.ingredient-row');
+            const notesField = row.querySelector('.substitution-notes');
+            
+            if (notesField) {
+                notesField.style.display = checkbox.checked ? 'block' : 'none';
+                if (!checkbox.checked) {
+                    notesField.value = ''; // Clear notes when unchecked
+                }
+            }
         }
         
         /**
@@ -1120,10 +1229,14 @@
             const select = row.querySelector('.ingredient-select');
             const brand = row.querySelector('.ingredient-brand');
             const amount = row.querySelector('.ingredient-amount');
+            const minQty = row.querySelector('.ingredient-min-qty');
+            const subNotes = row.querySelector('.substitution-notes');
             
             return (select && select.value) || 
                    (brand && brand.value.trim()) || 
-                   (amount && amount.value);
+                   (amount && amount.value) ||
+                   (minQty && minQty.value.trim()) ||
+                   (subNotes && subNotes.value.trim());
         }
         
         /**
@@ -1135,17 +1248,28 @@
             
             rows.forEach((row, index) => {
                 const select = row.querySelector('.ingredient-select');
-                const brand = row.querySelector('.ingredient-brand');
+                const substitutionsSelect = row.querySelector('.ingredient-substitutions');
                 const amount = row.querySelector('.ingredient-amount');
                 const unit = row.querySelector('.ingredient-unit');
+                const minQty = row.querySelector('.ingredient-min-qty');
+                const subCheckbox = row.querySelector('.substitution-checkbox');
+                const subNotes = row.querySelector('.substitution-notes');
                 const menuCheckbox = row.querySelector('.menu-checkbox');
                 
                 if (select.value) { // Only include rows with selected ingredients
+                    // Get selected substitutions
+                    const substitutions = substitutionsSelect ? 
+                        Array.from(substitutionsSelect.selectedOptions).map(option => option.value).filter(val => val) : 
+                        [];
+                    
                     ingredientsData.push({
                         name: select.value,
-                        preferredBrand: brand ? brand.value : '',
+                        substitutions: substitutions,
                         amount: parseFloat(amount.value) || 0,
                         unit: unit.value,
+                        minQuantity: minQty ? minQty.value.trim() : '',
+                        substitutionAllowed: subCheckbox ? subCheckbox.checked : false,
+                        substitutionNotes: subNotes ? subNotes.value.trim() : '',
                         showOnMenu: menuCheckbox ? menuCheckbox.checked : true,
                         order: index + 1
                     });
@@ -1362,9 +1486,10 @@
                 preview += '<ul>';
                 ingredientsData.forEach(ingredient => {
                     const amount = ingredient.amount > 0 ? ingredient.amount : '?';
-                    const brand = ingredient.preferredBrand ? ` (${ingredient.preferredBrand})` : '';
+                    const substitutions = ingredient.substitutions && ingredient.substitutions.length > 0 ? 
+                        ` (Alt: ${ingredient.substitutions.join(', ')})` : '';
                     const menuIndicator = ingredient.showOnMenu ? '📋' : '';
-                    preview += `<li>${amount} ${ingredient.unit} ${ingredient.name}${brand} ${menuIndicator}</li>`;
+                    preview += `<li>${amount} ${ingredient.unit} ${ingredient.name}${substitutions} ${menuIndicator}</li>`;
                 });
                 preview += '</ul>';
                 
@@ -1383,7 +1508,8 @@
             
             const instructions = formData.get('instructions');
             if (instructions) {
-                preview += `<p><strong>Instructions:</strong> ${instructions}</p>`;
+                const formattedInstructions = instructions.replace(/\n/g, '<br>');
+                preview += `<p><strong>Instructions:</strong> ${formattedInstructions}</p>`;
             }
             
             preview += '</div>';
@@ -1496,7 +1622,12 @@
                 'Other Produce'
             ],
             'Garnishes & Accessories': [
-                'Citrus Slices / Wedges',
+                'Dehydrated',
+                'Citrus Wheel',
+                'Citrus Half Wheel', 
+                'Citrus Quarter Wheel',
+                'Citrus Wedge',
+                'Citrus Peel',
                 'Olives',
                 'Cherries',
                 'Other Garnishes',

@@ -57,6 +57,11 @@ function saveIngredientData(formData, rowIndexToReplace = null) {
     }
     // --- End Spreadsheet Access ---
 
+    // --- Check for Multi-Size Submission ---
+    if (formData.multipleQuantities === 'on') {
+      return processMultiSizeIngredient(formData, sheet, headers);
+    }
+    // --- End Multi-Size Check ---
 
     // --- Server-Side Validation ---
     // Trim whitespace from relevant string fields
@@ -335,5 +340,140 @@ function checkIngredientExists(ingredientName, sheet) {
       Logger.log(`Stack Trace: ${error.stack}`);
       // Return null on error to avoid blocking submission unnecessarily if the check itself fails
       return null;
+  }
+}
+
+/**
+ * Process multi-size ingredient submission
+ * Creates separate database entries for each size variant
+ */
+function processMultiSizeIngredient(formData, sheet, headers) {
+  try {
+    Logger.log('Processing multi-size ingredient: ' + JSON.stringify(formData));
+    
+    // Extract base ingredient data
+    const baseIngredientName = formData.ingredientName ? formData.ingredientName.trim() : '';
+    if (!baseIngredientName) {
+      throw new Error("Ingredient Name is required for multi-size ingredients.");
+    }
+    
+    // Extract multi-size entries
+    const sizeEntries = [];
+    let counter = 1;
+    
+    // Look for multi-size fields (multiSize_1, multiMetric_1, multiCost_1, etc.)
+    while (formData[`multiSize_${counter}`]) {
+      const size = formData[`multiSize_${counter}`];
+      const metric = formData[`multiMetric_${counter}`];
+      const cost = formData[`multiCost_${counter}`];
+      
+      if (size && metric && cost) {
+        sizeEntries.push({
+          unitSize: size,
+          unitMetric: metric,
+          costPerUnit: cost
+        });
+      }
+      counter++;
+    }
+    
+    if (sizeEntries.length === 0) {
+      throw new Error("At least one size entry is required when multiple quantities is enabled.");
+    }
+    
+    // Generate base ingredient ID
+    const baseIngredientId = 'ING_' + new Date().getTime();
+    const now = new Date();
+    const userEmail = Session.getActiveUser().getEmail();
+    
+    const results = [];
+    
+    // Create entry for each size
+    sizeEntries.forEach((sizeEntry, index) => {
+      // Create unique ID for this size variant
+      const variantId = `${baseIngredientId}_${sizeEntry.unitSize}${sizeEntry.unitMetric}`;
+      const variantName = `${baseIngredientName} ${sizeEntry.unitSize}${sizeEntry.unitMetric}`;
+      
+      // Check for duplicates
+      const existingData = checkIngredientExists(variantName, sheet);
+      if (existingData) {
+        results.push({
+          success: false,
+          variantName: variantName,
+          duplicate: true,
+          existingData: existingData
+        });
+        return; // Skip this variant
+      }
+      
+      // Create row data for this variant
+      const rowData = [
+        now,                                           // timestamp
+        userEmail,                                     // userEmail
+        variantName,                                   // ingredientName (with size)
+        formData.category || null,                     // category
+        formData.subcategory || null,                  // subcategory
+        formData.labelBrand || null,                   // labelBrand
+        formData.countryOfOrigin || null,              // countryOfOrigin
+        formData.spiritsType || null,                  // spiritsType
+        formData.spiritsStyle || null,                 // spiritsStyle
+        formData.abv ? parseFloat(formData.abv) : null, // abv
+        formData.tasteProfile || null,                 // tasteProfile
+        formData.bodyStyle || null,                    // bodyStyle
+        formData.sku || null,                          // sku
+        `${sizeEntry.unitSize}${sizeEntry.unitMetric}`, // sizeVolume
+        formData.description || null,                  // description
+        formData.storageRequirements || null,          // storageRequirements
+        formData.shelfLifeDays ? parseInt(formData.shelfLifeDays) : null, // shelfLifeDays
+        formData.minQuantity || null,                  // minQuantity
+        sizeEntry.unitSize,                            // unitSize
+        sizeEntry.unitMetric,                          // unitMetric
+        parseFloat(sizeEntry.costPerUnit),             // costPerUnit
+        formData.supplierID || null,                   // supplierID
+        formData.source || null,                       // source
+        formData.alcoholic || false,                   // alcoholic
+        formData.bulk || false,                        // bulk
+        formData.isAvailable175L || false,             // isAvailable175L
+        formData.allergen || null,                     // allergen
+        formData.substitute || null                    // substitute
+      ];
+      
+      // Add to sheet
+      sheet.appendRow(rowData);
+      
+      results.push({
+        success: true,
+        variantName: variantName,
+        variantId: variantId,
+        size: sizeEntry.unitSize,
+        metric: sizeEntry.unitMetric,
+        cost: sizeEntry.costPerUnit
+      });
+      
+      Logger.log(`Multi-size variant added: ${variantName}`);
+    });
+    
+    // Return results summary
+    const successCount = results.filter(r => r.success).length;
+    const duplicateCount = results.filter(r => r.duplicate).length;
+    
+    let message = `Multi-size ingredient processed: ${successCount} variants created`;
+    if (duplicateCount > 0) {
+      message += `, ${duplicateCount} variants already existed`;
+    }
+    
+    return {
+      success: true,
+      message: message,
+      multiSize: true,
+      baseIngredientName: baseIngredientName,
+      baseIngredientId: baseIngredientId,
+      results: results,
+      timestamp: now
+    };
+    
+  } catch (error) {
+    Logger.log('Error processing multi-size ingredient: ' + error.toString());
+    throw new Error('Failed to process multi-size ingredient: ' + error.message);
   }
 }

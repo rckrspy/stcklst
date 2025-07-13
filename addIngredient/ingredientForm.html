@@ -241,7 +241,9 @@
                 <div><label class="unit-size-option"><input type="radio" name="unitSize" value="1"> 1</label></div>
                 <div><label class="unit-size-option"><input type="radio" name="unitSize" value="4"> 4</label></div>
                 <div><label class="unit-size-option"><input type="radio" name="unitSize" value="5"> 5</label></div> <!-- Added 5 -->
+                <div><label class="unit-size-option"><input type="radio" name="unitSize" value="6"> 6</label></div> <!-- Added 6 -->
                 <div><label class="unit-size-option"><input type="radio" name="unitSize" value="8"> 8</label></div>
+                <div><label class="unit-size-option"><input type="radio" name="unitSize" value="12"> 12</label></div> <!-- Added 12 -->
                 <div><label class="unit-size-option"><input type="radio" name="unitSize" value="16"> 16</label></div>
                 <div><label class="unit-size-option"><input type="radio" name="unitSize" value="32"> 32</label></div>
                 <div><label class="unit-size-option"><input type="radio" name="unitSize" value="64"> 64</label></div>
@@ -283,6 +285,25 @@
         <label for="costPerUnit">Cost per Unit (USD):</label>
         <input type="text" id="costPerUnit" name="costPerUnit" placeholder="e.g., 12.99" inputmode="decimal" pattern="^\d*(\.\d{0,2})?$" maxlength="10">
         <small>Cost for the Unit Size specified above. Numbers/decimal only. Exclude sales tax.</small>
+      </div>
+
+      <div class="form-group">
+        <label>
+          <input type="checkbox" id="multipleQuantities" name="multipleQuantities" onchange="toggleMultiSizeSection()">
+          Available in multiple quantities?
+        </label>
+        <small>Check this if the ingredient is sold in different sizes (e.g., 750ml, 1L, 1.75L bottles)</small>
+      </div>
+
+      <!-- Multi-Size Section (initially hidden) -->
+      <div id="multiSizeSection" style="display: none; border: 1px solid #ddd; padding: 15px; margin: 15px 0; border-radius: 5px; background: #f9f9f9;">
+        <h4 style="margin-top: 0; color: #333;">Additional Size Options</h4>
+        <div id="multiSizeContainer">
+          <!-- Dynamic size entries will be added here -->
+        </div>
+        <button type="button" onclick="addSizeEntry()" class="btn btn-secondary" style="margin-top: 10px;">
+          Add Another Size
+        </button>
       </div>
 
       <div class="form-group">
@@ -436,16 +457,48 @@
       }
       formData.costPerUnit = costPerUnitValue;
 
+      // Collect enhanced fields
+      formData.subcategory = form.subcategory.value.trim();
+      formData.countryOfOrigin = form.countryOfOrigin.value.trim();
+      formData.abv = form.abv.value.trim();
+      formData.spiritsType = form.spiritsType.value.trim();
+      formData.spiritsStyle = form.spiritsStyle.value.trim();
+      formData.tasteProfile = form.tasteProfile.value.trim();
+      formData.bodyStyle = form.bodyStyle.value;
+      formData.sku = form.sku.value.trim();
+      formData.sizeVolume = form.sizeVolume.value.trim();
+      formData.description = form.description.value.trim();
+      formData.storageRequirements = form.storageRequirements.value;
+      formData.shelfLifeDays = form.shelfLifeDays.value.trim();
+      formData.supplierID = form.supplierID.value.trim();
       formData.source = form.source.value.trim();
       formData.allergen = form.allergen.value.trim();
       formData.substitute = form.substitute.value.trim();
-      formData.storage = form.storage.value.trim();
-      formData.shelfLife = form.shelfLife.value.trim();
 
       // Collect checkbox values
       formData.alcoholic = form.alcoholic.checked;
       formData.bulk = form.bulk.checked;
       formData.isAvailable175L = form.isAvailable175L.checked; // *** ADD New Checkbox Value ***
+      
+      // Collect multi-size data
+      formData.multipleQuantities = form.multipleQuantities.checked ? 'on' : '';
+      
+      // If multi-size is enabled, collect all size entries
+      if (formData.multipleQuantities === 'on') {
+        const sizeEntries = document.querySelectorAll('.size-entry');
+        sizeEntries.forEach((entry, index) => {
+          const counter = index + 1;
+          const sizeInput = entry.querySelector(`input[name*="multiSize_"]`);
+          const metricInput = entry.querySelector(`select[name*="multiMetric_"]`);
+          const costInput = entry.querySelector(`input[name*="multiCost_"]`);
+          
+          if (sizeInput && metricInput && costInput) {
+            formData[`multiSize_${counter}`] = sizeInput.value;
+            formData[`multiMetric_${counter}`] = metricInput.value;
+            formData[`multiCost_${counter}`] = costInput.value;
+          }
+        });
+      }
 
       console.log("Form Data:", formData);
       currentFormData = formData; // Store current data for potential replacement
@@ -722,6 +775,80 @@
            console.error("Error sending iframe origin postMessage:", e);
        }
      });
+
+    // Multi-Size Functionality
+    let sizeEntryCounter = 0;
+    
+    function toggleMultiSizeSection() {
+      const checkbox = document.getElementById('multipleQuantities');
+      const section = document.getElementById('multiSizeSection');
+      
+      if (checkbox.checked) {
+        section.style.display = 'block';
+        // Add first size entry if none exist
+        if (document.querySelectorAll('.size-entry').length === 0) {
+          addSizeEntry();
+        }
+      } else {
+        section.style.display = 'none';
+        // Clear all size entries
+        document.getElementById('multiSizeContainer').innerHTML = '';
+        sizeEntryCounter = 0;
+      }
+    }
+    
+    function addSizeEntry() {
+      sizeEntryCounter++;
+      const container = document.getElementById('multiSizeContainer');
+      
+      const sizeEntry = document.createElement('div');
+      sizeEntry.className = 'size-entry';
+      sizeEntry.style.cssText = 'border: 1px solid #ccc; padding: 10px; margin: 10px 0; border-radius: 3px; background: white;';
+      
+      sizeEntry.innerHTML = `
+        <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 10px;">
+          <h5 style="margin: 0; color: #666;">Size Option ${sizeEntryCounter}</h5>
+          <button type="button" onclick="removeSizeEntry(this)" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; margin-left: auto;">Remove</button>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+          <div>
+            <label>Unit Size:</label>
+            <input type="number" name="multiSize_${sizeEntryCounter}" placeholder="750" min="0" step="any" required style="width: 100%; padding: 5px; border: 1px solid #ccc; border-radius: 3px;">
+          </div>
+          <div>
+            <label>Unit Metric:</label>
+            <select name="multiMetric_${sizeEntryCounter}" required style="width: 100%; padding: 5px; border: 1px solid #ccc; border-radius: 3px;">
+              <option value="">-- Select --</option>
+              <option value="ml">ml</option>
+              <option value="L">L</option>
+              <option value="fl oz">fl oz</option>
+              <option value="oz">oz</option>
+              <option value="gal">gal</option>
+              <option value="g">g</option>
+              <option value="kg">kg</option>
+              <option value="lb">lb</option>
+              <option value="each">each</option>
+              <option value="bottle">bottle</option>
+              <option value="case">case</option>
+              <option value="bunch">bunch</option>
+              <option value="N/A">N/A</option>
+            </select>
+          </div>
+          <div>
+            <label>Cost per Unit ($):</label>
+            <input type="number" name="multiCost_${sizeEntryCounter}" placeholder="12.99" min="0" step="0.01" required style="width: 100%; padding: 5px; border: 1px solid #ccc; border-radius: 3px;">
+          </div>
+        </div>
+      `;
+      
+      container.appendChild(sizeEntry);
+    }
+    
+    function removeSizeEntry(button) {
+      const sizeEntry = button.closest('.size-entry');
+      sizeEntry.remove();
+    }
 
   </script>
 </body>
