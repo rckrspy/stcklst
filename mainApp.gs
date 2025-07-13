@@ -5,9 +5,9 @@
  */
 
 // System Version Configuration
-const SYSTEM_VERSION = '3.0.0';
-const VERSION_DATE = '2024-07-12';
-const VERSION_NAME = 'Unified Beverage Interface';
+const SYSTEM_VERSION = '3.3.0';
+const VERSION_DATE = '2024-07-13';
+const VERSION_NAME = 'Professional Recipe Enhancements';
 
 function doGet(e) {
   try {

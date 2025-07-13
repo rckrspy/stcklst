@@ -548,7 +548,7 @@
                 <div>
                     <h1 class="page-title">🍹 Create New Beverage</h1>
                     <div class="version-info" style="font-size: 0.8rem; color: #6c757d; margin-top: 5px;">
-                        Version 3.0.0 - Unified Beverage Interface
+                        Version 3.3.0 - Professional Recipe Enhancements
                     </div>
                 </div>
                 <a href="https://script.google.com/d/1rpVR1c_8a7RbFy6dmCJa2kSCjgQ_stw-EdpIN4v4F3bRla-szSbZyzy6/edit" 
@@ -767,13 +767,15 @@
                             <option value="Gin">Gin</option>
                             <option value="Rum">Rum</option>
                             <option value="Brandy & Cognac">Brandy & Cognac</option>
-                            <option value="Liqueurs/Cordials/Schnapps">Liqueurs/Cordials/Schnapps</option>
                             <option value="Other Spirits">Other Spirits</option>
+                            <option value="Aperitifs, Amari & Vermouths">Aperitifs, Amari & Vermouths</option>
+                            <option value="Liqueurs, Cordials & Schnapps">Liqueurs, Cordials & Schnapps</option>
                             <option value="Mixers & Modifiers">Mixers & Modifiers</option>
                             <option value="Fresh Ingredients">Fresh Ingredients</option>
                             <option value="Garnishes & Accessories">Garnishes & Accessories</option>
+                            <option value="Ready-to-Drink (RTD) Beverages">Ready-to-Drink (RTD) Beverages</option>
                             <option value="Wine">Wine</option>
-                            <option value="Beer">Beer</option>
+                            <option value="Beer & Other Fermented">Beer & Other Fermented</option>
                             <option value="Other">Other</option>
                         </select>
                     </div>
@@ -1413,15 +1415,6 @@
                 'Cognac',
                 'Other Brandy'
             ],
-            'Liqueurs/Cordials/Schnapps': [
-                'Amaro',
-                'Aperitif (e.g., Campari, Aperol)',
-                'Coffee Liqueur',
-                'Herbal Liqueur',
-                'Fruit Liqueur',
-                'Schnapps',
-                'Other Liqueur'
-            ],
             'Other Spirits': [
                 'Mezcal',
                 'Soju',
@@ -1429,18 +1422,29 @@
                 'Absinthe',
                 'Other Spirits'
             ],
+            'Aperitifs, Amari & Vermouths': [
+                'Aperitif (e.g., Aperol, Campari)',
+                'Amaro',
+                'Vermouth'
+            ],
+            'Liqueurs, Cordials & Schnapps': [
+                'Herbal Liqueur',
+                'Coffee Liqueur',
+                'Fruit Liqueur',
+                'Schnapps',
+                'Other Liqueur'
+            ],
             'Mixers & Modifiers': [
-                'Sodas (e.g., Cola, Club Soda, Tonic)',
+                'Sodas (e.g., Cola, Club Soda, Tonic, Ginger Beer)',
                 'Juices (e.g., Orange, Cranberry, Pineapple, Grapefruit)',
                 'Syrups (e.g., Simple Syrup, Agave, Grenadine)',
-                'Other Mixers (e.g., Ginger Beer, Energy Drinks)',
+                'Other Mixers',
                 'Bitters',
-                'Vermouth (Dry, Sweet)',
                 'Other Modifiers'
             ],
             'Fresh Ingredients': [
                 'Limes',
-                'Lemons',
+                'Lemons', 
                 'Oranges',
                 'Grapefruit',
                 'Other Citrus',
@@ -1462,18 +1466,23 @@
                 'Napkins',
                 'Coasters'
             ],
+            'Ready-to-Drink (RTD) Beverages': [
+                'Canned Cocktails',
+                'Canned Hard Seltzers',
+                'Canned Wine',
+                'Other RTDs'
+            ],
             'Wine': [
                 'Red Wine',
                 'White Wine',
                 'Rosé',
                 'Sparkling Wine'
             ],
-            'Beer': [
+            'Beer & Other Fermented': [
                 'Light Lager',
                 'India Pale Ale (IPA)',
                 'Stout / Porter',
                 'Sour',
-                'Hard Seltzer',
                 'Cider',
                 'Other Beer'
             ],

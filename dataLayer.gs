@@ -422,12 +422,18 @@ function determineSubcategory(ingredientName, category = '') {
     return 'Other Brandy';
   }
   
-  // Liqueurs subcategories
+  // Aperitifs, Amari & Vermouths subcategories
+  if (cat.includes('aperitif') || cat.includes('amari') || cat.includes('vermouth')) {
+    if (name.includes('aperitif') || name.includes('aperol') || name.includes('campari')) return 'Aperitif (e.g., Aperol, Campari)';
+    if (name.includes('amaro') || name.includes('fernet') || name.includes('averna')) return 'Amaro';
+    if (name.includes('vermouth') || name.includes('dolin') || name.includes('carpano')) return 'Vermouth';
+    return 'Aperitif (e.g., Aperol, Campari)'; // Default
+  }
+  
+  // Liqueurs, Cordials & Schnapps subcategories
   if (cat.includes('liqueur') || cat.includes('cordial') || cat.includes('schnapps')) {
-    if (name.includes('amaro') || name.includes('campari') || name.includes('fernet')) return 'Amaro';
-    if (name.includes('aperitif') || name.includes('aperol') || name.includes('campari')) return 'Aperitif (e.g., Campari, Aperol)';
-    if (name.includes('coffee') || name.includes('kahlua') || name.includes('tia maria')) return 'Coffee Liqueur';
     if (name.includes('herbal') || name.includes('chartreuse') || name.includes('benedictine')) return 'Herbal Liqueur';
+    if (name.includes('coffee') || name.includes('kahlua') || name.includes('tia maria')) return 'Coffee Liqueur';
     if (name.includes('fruit') || name.includes('cherry') || name.includes('peach') || name.includes('apple')) return 'Fruit Liqueur';
     if (name.includes('schnapps')) return 'Schnapps';
     return 'Other Liqueur';
@@ -444,13 +450,20 @@ function determineSubcategory(ingredientName, category = '') {
   
   // Mixers & Modifiers subcategories
   if (cat.includes('mixer') || cat.includes('modifier')) {
-    if (name.includes('cola') || name.includes('tonic') || name.includes('club soda') || name.includes('ginger ale')) return 'Sodas (e.g., Cola, Club Soda, Tonic)';
-    if (name.includes('juice') || name.includes('orange') || name.includes('cranberry') || name.includes('pineapple')) return 'Juices (e.g., Orange, Cranberry, Pineapple, Grapefruit)';
+    if (name.includes('cola') || name.includes('tonic') || name.includes('club soda') || name.includes('ginger beer') || name.includes('ginger ale')) return 'Sodas (e.g., Cola, Club Soda, Tonic, Ginger Beer)';
+    if (name.includes('juice') || name.includes('orange') || name.includes('cranberry') || name.includes('pineapple') || name.includes('grapefruit')) return 'Juices (e.g., Orange, Cranberry, Pineapple, Grapefruit)';
     if (name.includes('syrup') || name.includes('simple syrup') || name.includes('grenadine') || name.includes('agave')) return 'Syrups (e.g., Simple Syrup, Agave, Grenadine)';
-    if (name.includes('ginger beer') || name.includes('energy drink')) return 'Other Mixers (e.g., Ginger Beer, Energy Drinks)';
+    if (name.includes('energy drink') || name.includes('mixer')) return 'Other Mixers';
     if (name.includes('bitter')) return 'Bitters';
-    if (name.includes('vermouth')) return 'Vermouth (Dry, Sweet)';
     return 'Other Modifiers';
+  }
+  
+  // Ready-to-Drink (RTD) Beverages subcategories
+  if (cat.includes('ready-to-drink') || cat.includes('rtd')) {
+    if (name.includes('canned cocktail') || name.includes('premixed cocktail')) return 'Canned Cocktails';
+    if (name.includes('hard seltzer') || name.includes('seltzer') || name.includes('white claw') || name.includes('truly')) return 'Canned Hard Seltzers';
+    if (name.includes('canned wine') || name.includes('wine can')) return 'Canned Wine';
+    return 'Other RTDs';
   }
   
   // Fresh Ingredients subcategories
@@ -490,13 +503,12 @@ function determineSubcategory(ingredientName, category = '') {
     return 'White Wine'; // Default
   }
   
-  // Beer subcategories
-  if (cat.includes('beer')) {
+  // Beer & Other Fermented subcategories
+  if (cat.includes('beer') || cat.includes('fermented')) {
     if (name.includes('lager') || name.includes('light') || name.includes('corona') || name.includes('budweiser')) return 'Light Lager';
     if (name.includes('ipa') || name.includes('pale ale') || name.includes('hoppy')) return 'India Pale Ale (IPA)';
     if (name.includes('stout') || name.includes('porter') || name.includes('guinness')) return 'Stout / Porter';
     if (name.includes('sour') || name.includes('gose') || name.includes('lambic')) return 'Sour';
-    if (name.includes('seltzer') || name.includes('truly') || name.includes('white claw')) return 'Hard Seltzer';
     if (name.includes('cider') || name.includes('angry orchard')) return 'Cider';
     return 'Other Beer';
   }
