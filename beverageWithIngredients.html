@@ -759,22 +759,29 @@
                     
                     <div class="form-group">
                         <label for="category">Category *</label>
-                        <select id="category" name="category" required>
+                        <select id="category" name="category" required onchange="updateSubcategoryOptions()">
                             <option value="">-- Select Category --</option>
                             <option value="Vodka">Vodka</option>
+                            <option value="Whiskey">Whiskey</option>
                             <option value="Tequila">Tequila</option>
-                            <option value="Bourbon">Bourbon</option>
-                            <option value="Scotch">Scotch</option>
                             <option value="Gin">Gin</option>
                             <option value="Rum">Rum</option>
-                            <option value="Liqueurs/Cordials/Schnapps">Liqueurs/Cordials/Schnapps</option>
                             <option value="Brandy & Cognac">Brandy & Cognac</option>
+                            <option value="Liqueurs/Cordials/Schnapps">Liqueurs/Cordials/Schnapps</option>
+                            <option value="Other Spirits">Other Spirits</option>
                             <option value="Mixers & Modifiers">Mixers & Modifiers</option>
                             <option value="Fresh Ingredients">Fresh Ingredients</option>
                             <option value="Garnishes & Accessories">Garnishes & Accessories</option>
                             <option value="Wine">Wine</option>
                             <option value="Beer">Beer</option>
                             <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="subcategory-group" style="display: none;">
+                        <label for="subcategory">Subcategory</label>
+                        <select id="subcategory" name="subcategory">
+                            <option value="">-- Select Subcategory --</option>
                         </select>
                     </div>
                     
@@ -1366,6 +1373,150 @@
             document.getElementById('ingredient-form').reset();
             hideMessage('ingredient-message');
             currentTargetDropdown = null;
+            
+            // Reset subcategory dropdown
+            document.getElementById('subcategory-group').style.display = 'none';
+            document.getElementById('subcategory').innerHTML = '<option value="">-- Select Subcategory --</option>';
+        }
+        
+        // Subcategory management functions
+        const INGREDIENT_SUBCATEGORIES = {
+            'Vodka': [], // No subcategories needed
+            'Whiskey': [
+                'Bourbon',
+                'Scotch',
+                'Rye Whiskey',
+                'Irish Whiskey',
+                'Canadian Whisky',
+                'Japanese Whisky',
+                'Other Whiskey'
+            ],
+            'Tequila': [
+                'Tequila (Blanco/Silver)',
+                'Tequila (Reposado)',
+                'Tequila (Añejo)'
+            ],
+            'Gin': [
+                'London Dry Gin',
+                'Flavored Gin',
+                'Other Gin'
+            ],
+            'Rum': [
+                'Light Rum',
+                'Dark Rum',
+                'Spiced Rum',
+                'Aged Rum',
+                'Other Rum'
+            ],
+            'Brandy & Cognac': [
+                'Brandy',
+                'Cognac',
+                'Other Brandy'
+            ],
+            'Liqueurs/Cordials/Schnapps': [
+                'Amaro',
+                'Aperitif (e.g., Campari, Aperol)',
+                'Coffee Liqueur',
+                'Herbal Liqueur',
+                'Fruit Liqueur',
+                'Schnapps',
+                'Other Liqueur'
+            ],
+            'Other Spirits': [
+                'Mezcal',
+                'Soju',
+                'Sake',
+                'Absinthe',
+                'Other Spirits'
+            ],
+            'Mixers & Modifiers': [
+                'Sodas (e.g., Cola, Club Soda, Tonic)',
+                'Juices (e.g., Orange, Cranberry, Pineapple, Grapefruit)',
+                'Syrups (e.g., Simple Syrup, Agave, Grenadine)',
+                'Other Mixers (e.g., Ginger Beer, Energy Drinks)',
+                'Bitters',
+                'Vermouth (Dry, Sweet)',
+                'Other Modifiers'
+            ],
+            'Fresh Ingredients': [
+                'Limes',
+                'Lemons',
+                'Oranges',
+                'Grapefruit',
+                'Other Citrus',
+                'Mint',
+                'Basil',
+                'Rosemary',
+                'Other Herbs',
+                'Berries',
+                'Cucumber',
+                'Other Produce'
+            ],
+            'Garnishes & Accessories': [
+                'Citrus Slices / Wedges',
+                'Olives',
+                'Cherries',
+                'Other Garnishes',
+                'Cocktail Picks',
+                'Stirrers',
+                'Napkins',
+                'Coasters'
+            ],
+            'Wine': [
+                'Red Wine',
+                'White Wine',
+                'Rosé',
+                'Sparkling Wine'
+            ],
+            'Beer': [
+                'Light Lager',
+                'India Pale Ale (IPA)',
+                'Stout / Porter',
+                'Sour',
+                'Hard Seltzer',
+                'Cider',
+                'Other Beer'
+            ],
+            'Other': [
+                'Still Water',
+                'Sparkling Water',
+                'Coffee / Tea',
+                'Other Non-Alcoholic'
+            ]
+        };
+        
+        function updateSubcategoryOptions() {
+            const categorySelect = document.getElementById('category');
+            const subcategoryGroup = document.getElementById('subcategory-group');
+            const subcategorySelect = document.getElementById('subcategory');
+            
+            const selectedCategory = categorySelect.value;
+            
+            // Clear existing subcategory options
+            subcategorySelect.innerHTML = '<option value="">-- Select Subcategory --</option>';
+            
+            if (selectedCategory && INGREDIENT_SUBCATEGORIES[selectedCategory]) {
+                const subcategories = INGREDIENT_SUBCATEGORIES[selectedCategory];
+                
+                if (subcategories.length > 0) {
+                    // Show subcategory field
+                    subcategoryGroup.style.display = 'block';
+                    
+                    // Populate subcategory options
+                    subcategories.forEach(subcategory => {
+                        const option = document.createElement('option');
+                        option.value = subcategory;
+                        option.textContent = subcategory;
+                        subcategorySelect.appendChild(option);
+                    });
+                } else {
+                    // Hide subcategory field for categories with no subcategories (like Vodka)
+                    subcategoryGroup.style.display = 'none';
+                }
+            } else {
+                // Hide subcategory field when no category is selected
+                subcategoryGroup.style.display = 'none';
+            }
         }
         
         // Help modal functions

@@ -128,7 +128,7 @@ class IngredientManager {
       generateIngredientId(),                    // Ingredient_ID
       data.name || '',                           // Name
       data.category || categorizeIngredient(data.name), // Category
-      data.subcategory || determineSubcategory(data.name), // Subcategory
+      data.subcategory || determineSubcategory(data.name, data.category), // Subcategory
       data.brand || extractBrand(data.name),     // Brand
       data.countryOfOrigin || '',                // Country_of_Origin
       data.spiritsType || data.category,         // Spirits_Type

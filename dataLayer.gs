@@ -374,22 +374,143 @@ function categorizeIngredient(ingredientName) {
 }
 
 /**
- * Determine subcategory based on ingredient analysis
+ * Determine subcategory based on ingredient analysis and category
  */
-function determineSubcategory(ingredientName) {
+function determineSubcategory(ingredientName, category = '') {
   const name = ingredientName.toLowerCase();
-  
-  // Vodka subcategories
-  if (name.includes('premium') || name.includes('ultra')) return 'Premium';
-  if (name.includes('flavored') || name.includes('vanilla') || name.includes('citrus')) return 'Flavored';
+  const cat = category.toLowerCase();
   
   // Whiskey subcategories
-  if (name.includes('single malt')) return 'Single Malt';
-  if (name.includes('blend')) return 'Blended';
-  if (name.includes('rye')) return 'Rye';
+  if (cat.includes('whiskey') || cat.includes('whisky')) {
+    if (name.includes('bourbon')) return 'Bourbon';
+    if (name.includes('scotch') || name.includes('single malt') || name.includes('islay') || name.includes('speyside')) return 'Scotch';
+    if (name.includes('rye')) return 'Rye Whiskey';
+    if (name.includes('irish') || name.includes('jameson') || name.includes('bushmills')) return 'Irish Whiskey';
+    if (name.includes('canadian') || name.includes('crown royal') || name.includes('canadian club')) return 'Canadian Whisky';
+    if (name.includes('japanese') || name.includes('nikka') || name.includes('hibiki') || name.includes('yamazaki')) return 'Japanese Whisky';
+    return 'Other Whiskey';
+  }
   
-  // Default
-  return 'Standard';
+  // Tequila subcategories
+  if (cat.includes('tequila')) {
+    if (name.includes('blanco') || name.includes('silver') || name.includes('plata')) return 'Tequila (Blanco/Silver)';
+    if (name.includes('reposado')) return 'Tequila (Reposado)';
+    if (name.includes('añejo') || name.includes('anejo')) return 'Tequila (Añejo)';
+    return 'Tequila (Blanco/Silver)'; // Default for tequila
+  }
+  
+  // Gin subcategories
+  if (cat.includes('gin')) {
+    if (name.includes('london dry') || name.includes('tanqueray') || name.includes('bombay')) return 'London Dry Gin';
+    if (name.includes('flavored') || name.includes('cucumber') || name.includes('elderflower') || name.includes('pink')) return 'Flavored Gin';
+    return 'Other Gin';
+  }
+  
+  // Rum subcategories
+  if (cat.includes('rum')) {
+    if (name.includes('white') || name.includes('light') || name.includes('silver') || name.includes('bacardi')) return 'Light Rum';
+    if (name.includes('dark') || name.includes('black') || name.includes('goslings')) return 'Dark Rum';
+    if (name.includes('spiced') || name.includes('captain morgan') || name.includes('sailor jerry')) return 'Spiced Rum';
+    if (name.includes('aged') || name.includes('premium') || name.includes('reserve')) return 'Aged Rum';
+    return 'Other Rum';
+  }
+  
+  // Brandy & Cognac subcategories
+  if (cat.includes('brandy') || cat.includes('cognac')) {
+    if (name.includes('cognac') || name.includes('hennessy') || name.includes('remy martin')) return 'Cognac';
+    if (name.includes('brandy')) return 'Brandy';
+    return 'Other Brandy';
+  }
+  
+  // Liqueurs subcategories
+  if (cat.includes('liqueur') || cat.includes('cordial') || cat.includes('schnapps')) {
+    if (name.includes('amaro') || name.includes('campari') || name.includes('fernet')) return 'Amaro';
+    if (name.includes('aperitif') || name.includes('aperol') || name.includes('campari')) return 'Aperitif (e.g., Campari, Aperol)';
+    if (name.includes('coffee') || name.includes('kahlua') || name.includes('tia maria')) return 'Coffee Liqueur';
+    if (name.includes('herbal') || name.includes('chartreuse') || name.includes('benedictine')) return 'Herbal Liqueur';
+    if (name.includes('fruit') || name.includes('cherry') || name.includes('peach') || name.includes('apple')) return 'Fruit Liqueur';
+    if (name.includes('schnapps')) return 'Schnapps';
+    return 'Other Liqueur';
+  }
+  
+  // Other Spirits subcategories
+  if (cat.includes('other spirits')) {
+    if (name.includes('mezcal')) return 'Mezcal';
+    if (name.includes('soju')) return 'Soju';
+    if (name.includes('sake')) return 'Sake';
+    if (name.includes('absinthe')) return 'Absinthe';
+    return 'Other Spirits';
+  }
+  
+  // Mixers & Modifiers subcategories
+  if (cat.includes('mixer') || cat.includes('modifier')) {
+    if (name.includes('cola') || name.includes('tonic') || name.includes('club soda') || name.includes('ginger ale')) return 'Sodas (e.g., Cola, Club Soda, Tonic)';
+    if (name.includes('juice') || name.includes('orange') || name.includes('cranberry') || name.includes('pineapple')) return 'Juices (e.g., Orange, Cranberry, Pineapple, Grapefruit)';
+    if (name.includes('syrup') || name.includes('simple syrup') || name.includes('grenadine') || name.includes('agave')) return 'Syrups (e.g., Simple Syrup, Agave, Grenadine)';
+    if (name.includes('ginger beer') || name.includes('energy drink')) return 'Other Mixers (e.g., Ginger Beer, Energy Drinks)';
+    if (name.includes('bitter')) return 'Bitters';
+    if (name.includes('vermouth')) return 'Vermouth (Dry, Sweet)';
+    return 'Other Modifiers';
+  }
+  
+  // Fresh Ingredients subcategories
+  if (cat.includes('fresh')) {
+    if (name.includes('lime')) return 'Limes';
+    if (name.includes('lemon')) return 'Lemons';
+    if (name.includes('orange')) return 'Oranges';
+    if (name.includes('grapefruit')) return 'Grapefruit';
+    if (name.includes('citrus')) return 'Other Citrus';
+    if (name.includes('mint')) return 'Mint';
+    if (name.includes('basil')) return 'Basil';
+    if (name.includes('rosemary')) return 'Rosemary';
+    if (name.includes('herb')) return 'Other Herbs';
+    if (name.includes('berry') || name.includes('strawberry') || name.includes('blueberry')) return 'Berries';
+    if (name.includes('cucumber')) return 'Cucumber';
+    return 'Other Produce';
+  }
+  
+  // Garnishes & Accessories subcategories
+  if (cat.includes('garnish') || cat.includes('accessor')) {
+    if (name.includes('slice') || name.includes('wedge') || name.includes('wheel')) return 'Citrus Slices / Wedges';
+    if (name.includes('olive')) return 'Olives';
+    if (name.includes('cherry') || name.includes('maraschino')) return 'Cherries';
+    if (name.includes('pick')) return 'Cocktail Picks';
+    if (name.includes('stirrer') || name.includes('straw')) return 'Stirrers';
+    if (name.includes('napkin')) return 'Napkins';
+    if (name.includes('coaster')) return 'Coasters';
+    return 'Other Garnishes';
+  }
+  
+  // Wine subcategories
+  if (cat.includes('wine')) {
+    if (name.includes('red') || name.includes('cabernet') || name.includes('merlot') || name.includes('pinot noir')) return 'Red Wine';
+    if (name.includes('white') || name.includes('chardonnay') || name.includes('sauvignon blanc') || name.includes('pinot grigio')) return 'White Wine';
+    if (name.includes('rosé') || name.includes('rose')) return 'Rosé';
+    if (name.includes('sparkling') || name.includes('champagne') || name.includes('prosecco') || name.includes('cava')) return 'Sparkling Wine';
+    return 'White Wine'; // Default
+  }
+  
+  // Beer subcategories
+  if (cat.includes('beer')) {
+    if (name.includes('lager') || name.includes('light') || name.includes('corona') || name.includes('budweiser')) return 'Light Lager';
+    if (name.includes('ipa') || name.includes('pale ale') || name.includes('hoppy')) return 'India Pale Ale (IPA)';
+    if (name.includes('stout') || name.includes('porter') || name.includes('guinness')) return 'Stout / Porter';
+    if (name.includes('sour') || name.includes('gose') || name.includes('lambic')) return 'Sour';
+    if (name.includes('seltzer') || name.includes('truly') || name.includes('white claw')) return 'Hard Seltzer';
+    if (name.includes('cider') || name.includes('angry orchard')) return 'Cider';
+    return 'Other Beer';
+  }
+  
+  // Other category subcategories
+  if (cat.includes('other')) {
+    if (name.includes('still water') || name.includes('bottled water')) return 'Still Water';
+    if (name.includes('sparkling water') || name.includes('soda water') || name.includes('perrier')) return 'Sparkling Water';
+    if (name.includes('coffee') || name.includes('tea') || name.includes('espresso')) return 'Coffee / Tea';
+    return 'Other Non-Alcoholic';
+  }
+  
+  // Default fallback
+  return '';
 }
 
 /**

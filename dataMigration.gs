@@ -168,7 +168,7 @@ function migrateRow(currentRow, currentHeaders, enhancedHeaders, fieldMapping) {
         break;
         
       case 'Subcategory':
-        enhancedRow[index] = determineSubcategory(enhancedRow[1] || '');
+        enhancedRow[index] = determineSubcategory(enhancedRow[1] || '', enhancedRow[2] || '');
         break;
         
       case 'Brand':

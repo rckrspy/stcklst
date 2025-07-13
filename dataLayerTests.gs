@@ -337,7 +337,7 @@ function testUtilityFunctions() {
   }
   
   // Test subcategory determination
-  const subcategory = determineSubcategory('Premium Single Malt Scotch');
+  const subcategory = determineSubcategory('Premium Single Malt Scotch', 'Whiskey');
   if (!subcategory) {
     throw new Error('Subcategory determination failed');
   }
