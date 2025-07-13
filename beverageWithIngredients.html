@@ -391,6 +391,76 @@
             min-width: 80px;
         }
         
+        .substitutions-dropdown {
+            position: relative;
+            flex: 1;
+            min-width: 120px;
+        }
+        
+        .substitutions-button {
+            width: 100%;
+            padding: 8px 10px;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            text-align: left;
+        }
+        
+        .substitutions-button:hover {
+            background: #f8f9fa;
+        }
+        
+        .substitutions-text {
+            flex: 1;
+            color: #666;
+        }
+        
+        .substitutions-arrow {
+            color: #999;
+            font-size: 12px;
+            transition: transform 0.2s;
+        }
+        
+        .substitutions-dropdown.open .substitutions-arrow {
+            transform: rotate(180deg);
+        }
+        
+        .substitutions-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ccc;
+            border-top: none;
+            border-radius: 0 0 3px 3px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 1000;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .substitution-option {
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .substitution-option:hover {
+            background: #f8f9fa;
+        }
+        
+        .substitution-option input[type="checkbox"] {
+            margin-right: 8px;
+        }
+        
         .menu-indicator {
             flex: 0 0 60px;
             display: flex;
@@ -1041,12 +1111,17 @@
                             `<option value="${ing}" ${ingredient && ingredient.name === ing ? 'selected' : ''}>${ing}</option>`
                         ).join('')}
                     </select>
-                    <select class="ingredient-substitutions" name="substitutions-${ingredientCounter}" 
-                            multiple size="3" style="min-width: 150px;"
-                            onchange="updateIngredientsData(); saveProgress(); updateRecipePreview();"
-                            title="Select acceptable substitute ingredients from the same category">
-                        <option value="" disabled>Select substitutions...</option>
-                    </select>
+                    <div class="substitutions-dropdown" data-counter="${ingredientCounter}">
+                        <button type="button" class="substitutions-button" onclick="toggleSubstitutionsDropdown(this)">
+                            <span class="substitutions-text">Substitutions</span>
+                            <span class="substitutions-arrow">▼</span>
+                        </button>
+                        <div class="substitutions-menu" style="display: none;">
+                            <div class="substitutions-options">
+                                <!-- Dynamic options populated by updateSubstitutions -->
+                            </div>
+                        </div>
+                    </div>
                     <input type="number" class="ingredient-amount" name="amount-${ingredientCounter}" 
                            placeholder="Amount" step="0.0625" min="0" 
                            value="${ingredient ? ingredient.amount || '' : ''}"
@@ -1093,11 +1168,12 @@
         function updateSubstitutions(selectElement) {
             const selectedIngredient = selectElement.value;
             const row = selectElement.closest('.ingredient-row');
-            const substitutionsSelect = row.querySelector('.ingredient-substitutions');
+            const substitutionsDropdown = row.querySelector('.substitutions-dropdown');
+            const substitutionsOptions = substitutionsDropdown?.querySelector('.substitutions-options');
             
-            if (!substitutionsSelect || !selectedIngredient) {
-                if (substitutionsSelect) {
-                    substitutionsSelect.innerHTML = '<option value="" disabled>Select substitutions...</option>';
+            if (!substitutionsDropdown || !selectedIngredient) {
+                if (substitutionsOptions) {
+                    substitutionsOptions.innerHTML = '<div style="padding: 8px 12px; color: #999;">No substitutions available</div>';
                 }
                 return;
             }
@@ -1110,11 +1186,19 @@
                 .filter(ing => ing !== selectedIngredient && getIngredientCategory(ing) === selectedCategory)
                 .sort();
             
-            // Update substitutions dropdown
-            substitutionsSelect.innerHTML = '<option value="" disabled>Select substitutions...</option>' +
-                substitutionOptions.map(ing => 
-                    `<option value="${ing}">${ing}</option>`
-                ).join('');
+            if (substitutionOptions.length === 0) {
+                substitutionsOptions.innerHTML = '<div style="padding: 8px 12px; color: #999;">No substitutions available</div>';
+                return;
+            }
+            
+            // Update substitutions dropdown with checkboxes
+            const counter = substitutionsDropdown.dataset.counter;
+            substitutionsOptions.innerHTML = substitutionOptions.map(ing => 
+                `<div class="substitution-option" onclick="toggleSubstitution(this)">
+                    <input type="checkbox" value="${ing}" name="substitution-${counter}" onchange="updateSubstitutionsData()">
+                    <span>${ing}</span>
+                </div>`
+            ).join('');
         }
         
         /**
@@ -1138,6 +1222,77 @@
             
             return 'Other';
         }
+        
+        /**
+         * Toggle substitutions dropdown visibility
+         */
+        function toggleSubstitutionsDropdown(button) {
+            const dropdown = button.closest('.substitutions-dropdown');
+            const menu = dropdown.querySelector('.substitutions-menu');
+            const isOpen = dropdown.classList.contains('open');
+            
+            // Close all other dropdowns first
+            document.querySelectorAll('.substitutions-dropdown.open').forEach(d => {
+                if (d !== dropdown) {
+                    d.classList.remove('open');
+                    d.querySelector('.substitutions-menu').style.display = 'none';
+                }
+            });
+            
+            if (isOpen) {
+                dropdown.classList.remove('open');
+                menu.style.display = 'none';
+            } else {
+                dropdown.classList.add('open');
+                menu.style.display = 'block';
+            }
+        }
+        
+        /**
+         * Toggle individual substitution selection
+         */
+        function toggleSubstitution(optionElement) {
+            const checkbox = optionElement.querySelector('input[type="checkbox"]');
+            checkbox.checked = !checkbox.checked;
+            updateSubstitutionsData();
+        }
+        
+        /**
+         * Update substitutions data and button text
+         */
+        function updateSubstitutionsData() {
+            document.querySelectorAll('.substitutions-dropdown').forEach(dropdown => {
+                const button = dropdown.querySelector('.substitutions-button');
+                const textSpan = button.querySelector('.substitutions-text');
+                const checkboxes = dropdown.querySelectorAll('input[type="checkbox"]:checked');
+                
+                if (checkboxes.length === 0) {
+                    textSpan.textContent = 'Substitutions';
+                    textSpan.style.color = '#666';
+                } else if (checkboxes.length === 1) {
+                    textSpan.textContent = checkboxes[0].value;
+                    textSpan.style.color = '#333';
+                } else {
+                    textSpan.textContent = `${checkboxes.length} selected`;
+                    textSpan.style.color = '#333';
+                }
+            });
+            
+            // Update main ingredients data
+            updateIngredientsData();
+            saveProgress();
+            updateRecipePreview();
+        }
+        
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.substitutions-dropdown')) {
+                document.querySelectorAll('.substitutions-dropdown.open').forEach(dropdown => {
+                    dropdown.classList.remove('open');
+                    dropdown.querySelector('.substitutions-menu').style.display = 'none';
+                });
+            }
+        });
         
         /**
          * Remove an ingredient row
@@ -1174,12 +1329,12 @@
             const select = row.querySelector('.ingredient-select');
             const brand = row.querySelector('.ingredient-brand');
             const amount = row.querySelector('.ingredient-amount');
-            const substitutions = row.querySelector('.ingredient-substitutions');
+            const substitutionsDropdown = row.querySelector('.substitutions-dropdown');
             
             return (select && select.value) || 
                    (brand && brand.value.trim()) || 
                    (amount && amount.value) ||
-                   (substitutions && substitutions.selectedOptions.length > 0);
+                   (substitutionsDropdown && substitutionsDropdown.querySelectorAll('input[type="checkbox"]:checked').length > 0);
         }
         
         /**
@@ -1191,15 +1346,15 @@
             
             rows.forEach((row, index) => {
                 const select = row.querySelector('.ingredient-select');
-                const substitutionsSelect = row.querySelector('.ingredient-substitutions');
+                const substitutionsDropdown = row.querySelector('.substitutions-dropdown');
                 const amount = row.querySelector('.ingredient-amount');
                 const unit = row.querySelector('.ingredient-unit');
                 const menuCheckbox = row.querySelector('.menu-checkbox');
                 
                 if (select.value) { // Only include rows with selected ingredients
-                    // Get selected substitutions
-                    const substitutions = substitutionsSelect ? 
-                        Array.from(substitutionsSelect.selectedOptions).map(option => option.value).filter(val => val) : 
+                    // Get selected substitutions from checkboxes
+                    const substitutions = substitutionsDropdown ? 
+                        Array.from(substitutionsDropdown.querySelectorAll('input[type="checkbox"]:checked')).map(checkbox => checkbox.value) : 
                         [];
                     
                     ingredientsData.push({

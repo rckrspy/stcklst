@@ -30,6 +30,10 @@ function doGetIngredient(e) {
 function saveIngredientData(formData, rowIndexToReplace = null) {
   const functionStartTime = new Date();
   Logger.log(`saveIngredientData called. Action: ${rowIndexToReplace ? 'Replace Row ' + rowIndexToReplace : 'Add/Check Duplicate'}. Data: ${JSON.stringify(formData)}`);
+  
+  // Debug: Force console logging
+  console.log("BACKEND DEBUG: saveIngredientData called with:", formData);
+  console.log("BACKEND DEBUG: Spreadsheet ID:", "1-M1E2PVtAmGYj4SviOqo97RXxfhVEEtnxWROa3lHU3c");
 
   // --- Configuration ---
   const spreadsheetId = "1-M1E2PVtAmGYj4SviOqo97RXxfhVEEtnxWROa3lHU3c"; // *** REPLACE WITH YOUR SPREADSHEET ID ***

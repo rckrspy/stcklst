@@ -500,6 +500,10 @@
       // Show waiting modal and disable submit button
       showWaitingModal("Saving ingredient...");
       document.getElementById('submitButton').disabled = true;
+      
+      // Debug: Alert user about form submission
+      console.log("Submitting ingredient data to server...");
+      alert("DEBUG: About to submit ingredient: " + formData.ingredientName);
 
       // Call server-side function
       google.script.run

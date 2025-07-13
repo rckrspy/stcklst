@@ -5,9 +5,9 @@
  */
 
 // System Version Configuration
-const SYSTEM_VERSION = '3.3.0';
-const VERSION_DATE = '2024-07-13';
-const VERSION_NAME = 'Professional Recipe Enhancements';
+const SYSTEM_VERSION = '3.4.0';
+const VERSION_DATE = '2025-01-13';
+const VERSION_NAME = 'Multi-Size & Sync Fix Deployment';
 
 function doGet(e) {
   try {
